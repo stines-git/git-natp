@@ -184,21 +184,32 @@ function findparents() {
   log_pop
 }
 
+# Map from subject to parents.
+declare -A subject_to_parents
+
+# Set of subjects that could be a branch name (i.e. no parents nor children).
+declare -A branchnames
+
 for subject in "${subjects[@]}"
 do
   coords=(${subject_to_coords[$subject]})
-  log "Subject: $subject @ ${coords[@]}"
   row="${coords[0]}"
   col="${coords[1]}"
 
+  log "Subject: $subject @ ${coords[@]}"
+  log_push
+
+  # Insert false positives for now. Prune later.
+  branchnames[$subject]=""
+
   # First find the parents on the left of the subject.
-  log "Finding left parents for $subject"
+  log "Finding parents to the left"
   log_push
   parents="$(findparents $HORIZONTAL $row $((col - 1)) $FINDING_CONNECTOR)"
   log_pop
 
   # Then find the parents above the subject.
-  log "Finding above parents for $subject"
+  log "Finding parents above"
   log_push
   for parent_col in $(seq $((col - 1)) $((col + ${#subject} - 1)))
   do
@@ -207,7 +218,7 @@ do
   log_pop
 
   # Then find the parents below the subject.
-  log "Finding below parents for $subject"
+  log "Finding parents below"
   log_push
   for parent_col in $(seq $((col - 1)) $((col + ${#subject} - 1)))
   do
@@ -215,6 +226,61 @@ do
   done
   log_pop
 
-  line=($subject $parents)
-  echo "${line[@]}"
+  parents=($parents)
+
+  # Prune branch candidates and branch name candidates.
+  for parent in ${parents[@]}
+  do
+    if [[ -v branchnames[$parent] ]]
+    then
+      log "Removing branchname candidate $parent because it has child $subject."
+      unset branchnames[$parent]
+    fi
+  done
+  if [[ ( ${#parents[@]} -gt 0 ) && ( -v branchnames[$subject] ) ]]
+  then
+    log "Removing branchname candidate $subject because it has parents ${parents[@]}."
+    unset branchnames[$subject]
+  fi
+
+  subject_to_parents[$subject]="${parents[@]}"
+
+  log_pop
+done
+
+# Find branch names.
+for branchname in "${!branchnames[@]}"
+do
+  branchname_coords=(${subject_to_coords[$branchname]})
+  branchname_row="${branchname_coords[0]}"
+  branchname_col="${branchname_coords[1]}"
+  branch=$(inputat $branchname_row $((branchname_col - 2)))
+  log "Branchname coords: ${branchname_coords[@]}"
+  if [[ ( -v subject_to_coords[$branch] ) && ( ( ! -v branchnames[$branch] ) || ( -z branchnames[$branch] ) ) ]]
+  then
+    log "Found commit $branch for branchname $branchname."
+    branchnames[$branchname]=$branch
+  else
+    log "Removing branchname candidate $branchname because '$branch' is not a commit"
+    unset branchnames[$branchname]
+  fi
+done
+
+# Output stage.
+for subject in "${subjects[@]}"
+do
+  if [[ ! -v branchnames[$subject] ]]
+  then
+    output=($subject ${subject_to_parents[$subject]})
+    echo "${output[@]}"
+  fi
+done
+for subject in "${subjects[@]}"
+do
+  # We didn't loop through branchnames' keys directly because
+  # we want to ensure they appear in subject order.
+  if [[ -v branchnames[$subject] ]]
+  then
+    echo "[$subject] ${branchnames[$subject]}"
+  fi
 done
