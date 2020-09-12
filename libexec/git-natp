@@ -15,4 +15,7 @@ case "$cmd" in
 create )
   git-natp-create "$@"
   ;;
+compare )
+  git-natp-compare "$@"
+  ;;
 esac
