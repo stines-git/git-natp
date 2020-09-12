@@ -46,6 +46,7 @@ do
   mapfile -t git_graph < <(git rev-list --topo-order --reverse --parents "$branch")
   for entry in "${git_graph[@]}"
   do
+    entry=($entry)
     sha=${entry[0]}
     subject=$(git show --no-patch --format=%s "$sha")
     structurehash_commit "$sha" "$subject" "${entry[@]:1:}"
