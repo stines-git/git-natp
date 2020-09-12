@@ -17,18 +17,19 @@ done
 SUBJECT_CHAR_REGEX="[a-zA-Z0-9]"
 SUBJECT_REGEX="^$SUBJECT_CHAR_REGEX+$"
 
+LOGGING_LEVEL="quiet"  # or "verbose"
 log_indent=""
 
 function log_push() {
-  log_indent="$log_indent│"
+  [[ $LOGGING_LEVEL = "verbose" ]] && log_indent="$log_indent│" || true
 }
 
 function log_pop() {
-  log_indent="${log_indent%│}"
+  [[ $LOGGING_LEVEL = "verbose" ]] && log_indent="${log_indent%│}" || true
 }
 
 function log() {
-  true && echo "$log_indent$@" >> /dev/stderr || true
+  [[ $LOGGING_LEVEL = "verbose" ]]  && echo "$log_indent$@" >> /dev/stderr || true
 }
 
 function inputat() {
