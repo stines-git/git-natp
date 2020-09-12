@@ -164,8 +164,8 @@ do
         parents="$parents $(findparents $BELOW $((row + 1)) $parent_col)"
       done
 
-      parents=($parents)
-      echo "$subject ${parents[@]}"
+      line=($subject $parents)
+      echo "${line[@]}"
     fi
   done
 done
