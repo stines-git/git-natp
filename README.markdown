@@ -18,7 +18,12 @@ then this tool can do three things:
 
 Both commands accept the commit graph from `stdin`.
 
-### Diagram input format
+## Install
+
+To install this globally, run `sudo make install` and the scripts will be copied to
+`/usr/local/bin/...`. Similarly, `sudo make uninstall` removes them.
+
+## Diagram input format
 
 - Commit names (aka their subjects) are sequences of alphanumeric characters with no space in between.
 - The diagram must be topologically sorted left to right, so that the commits to the left are the parents of the commits to the right.
@@ -26,7 +31,7 @@ Both commands accept the commit graph from `stdin`.
 - Edges describe the parents of each commit, and need to be touching the commit name.
 - The parent order for each commit is important. This tool orders them based on the direction of the edges that are used to connect them. Going from the child to the parent (right-to-left), a horizontal edge comes before an upwards edge, and an upwards edge comes before a downwards edge.
 
-### Supported edges
+## Supported edges
 
 This tool supports the following ASCII edge connectors. Each edge character has restrictions on which direction the edge can connect from and to.
 
@@ -43,7 +48,7 @@ The following directions are based on the perspective of the edge character. The
 | `/`      | Yes :heavy_check_mark: | No  :x:                | No :x:                 | No :x:                 | No :x:                 | Yes :heavy_check_mark: |
 | `\`      | No  :x:                | No  :x:                | Yes :heavy_check_mark: | Yes :heavy_check_mark: | No :x:                 | No :x:                 |
 
-### git-natp adjacency list output format
+## git-natp adjacency list output format
 
 Each line corresponds to a commit on the graph. The first token is the commit subject.
 Subsequent tokens are the commit's parents in order. After every commit has been listed,
@@ -66,12 +71,6 @@ BB4 BB34 B4
 [master] BB4
 [feature] B4
 ```
-
-## Install
-
-To install this globally, run `sudo make install` and the scripts will be copied to
-`/usr/local/bin/...`. Similarly, `sudo make uninstall` removes them.
-
 
 ## Testing
 
