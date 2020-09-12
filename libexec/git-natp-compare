@@ -36,19 +36,19 @@ do
     commit=${entry[1]}
     branch_to_structurehash[$branchname]="${commit_to_structurehash[$commit]}"
   else
-    subject=$(echo $id | sed 's/_//g')  # Strip disambiguating underscores.
-    structurehash_commit "${entry[0]}" "$subject" "${entry[@]1:}"
+    subject=$(echo ${entry[0]} | sed 's/_//g')  # Strip disambiguating underscores.
+    structurehash_commit "${entry[0]}" "$subject" "${entry[@]:1:}"
   fi
 done
 
 for branch in "${!branch_to_structurehash[@]}"
 do
-  mapfile -t git_graph <(git rev-list --topo-order --reverse --parents "$branch")
+  mapfile -t git_graph < <(git rev-list --topo-order --reverse --parents "$branch")
   for entry in "${git_graph[@]}"
   do
     sha=${entry[0]}
     subject=$(git show --no-patch --format=%s "$sha")
-    structurehash_commit "$sha" "$subject" "${entry[@]1:}"
+    structurehash_commit "$sha" "$subject" "${entry[@]:1:}"
   done
   branch_sha=$(git rev-parse "$branch")
   if [[ ${branch_to_structurehash[$branch]} != ${commit_to_structurehash[$branch_sha]} ]]
