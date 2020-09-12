@@ -2,7 +2,7 @@
 set -eu
 
 TEST_DIR=$(dirname ${BASH_SOURCE[0]})
-TEST_DIR=$(cd TEST_DIR >/dev/null 2>&1 && pwd)
+TEST_DIR=$(cd "$TEST_DIR" >/dev/null 2>&1 && pwd)
 TMP_DIR="$TEST_DIR/tmp"
 
 export PATH="$TEST_DIR/../libexec:$PATH"
@@ -45,8 +45,9 @@ for i in "${!inputs[@]}"
 do
   test_number=$((i + 1))
   input="${inputs[i]}"
-  testcase="${input%.in}"
-  output="$testcase.out"
+  filename=$(basename "$input")
+  testcase="${filename%.in}"
+  output="${input%.in}.out"
 
   if [[ ( $# -gt 0 ) && ( $test_number -ne $1 ) ]]
   then
@@ -74,7 +75,8 @@ for i in "${!inputs[@]}"
 do
   test_number=$((count + i + 1))
   input="${inputs[i]}"
-  testcase="${input%.in}"
+  filename=$(basename "$input")
+  testcase="${filename%.in}"
 
   if [[ ( $# -gt 0 ) && ( $test_number -ne $1 ) ]]
   then
