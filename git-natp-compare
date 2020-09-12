@@ -43,18 +43,24 @@ done
 
 for branch in "${!branch_to_structurehash[@]}"
 do
-  mapfile -t git_graph < <(git rev-list --topo-order --reverse --parents "$branch")
-  for entry in "${git_graph[@]}"
-  do
-    entry=($entry)
-    sha=${entry[0]}
-    subject=$(git show --no-patch --format=%s "$sha")
-    structurehash_commit "$sha" "$subject" "${entry[@]:1:}"
-  done
-  branch_sha=$(git rev-parse "$branch")
-  if [[ ${branch_to_structurehash[$branch]} != ${commit_to_structurehash[$branch_sha]} ]]
+  if git show-ref --verify --quiet "refs/head/$branch"
   then
-    echo "Branch $branch has a different structure"
+    mapfile -t git_graph < <(git rev-list --topo-order --reverse --parents "$branch")
+    for entry in "${git_graph[@]}"
+    do
+      entry=($entry)
+      sha=${entry[0]}
+      subject=$(git show --no-patch --format=%s "$sha")
+      structurehash_commit "$sha" "$subject" "${entry[@]:1:}"
+    done
+    branch_sha=$(git rev-parse "$branch")
+    if [[ ${branch_to_structurehash[$branch]} != ${commit_to_structurehash[$branch_sha]} ]]
+    then
+      echo "Branch $branch has a different structure"
+      exit 1
+    fi
+  else
+    echo "Branch $branch does not exist"
     exit 1
   fi
 done
