@@ -25,6 +25,8 @@ function structurehash_commit() {
   commit_to_structurehash[$id]=$(printf "${structure[*]}" | sha256sum)
 }
 
+BRANCH_REGEX="\[[a-zA-Z0-9]+\]"
+
 for entry in "${graph[@]}"
 do
   entry=($entry)
