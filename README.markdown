@@ -14,9 +14,34 @@ then this tool can do three things:
 
 1. `git natp` will output the adjacency list of the graph.
 1. `git natp create ` will generate a new git repository that follows your commit graph structure.
-2. `git natp compare` will test to see if the current git repository follows your diagram.
+2. `git natp compare` will test to see if the current git repository follows your diagram. Note that commits not accessible through a branch name will be ignored.
 
 Both commands accept the commit graph from `stdin`.
+
+### Diagram input format
+
+- Commit names (aka their subjects) are sequences of alphanumeric characters with no space in between.
+- The diagram must be topologically sorted left to right, so that the commits to the left are the parents of the commits to the right.
+- Branch names are alphanumeric character sequences that is one space to the right of a commit subject.
+- Edges describe the parents of each commit, and need to be touching the commit name.
+- The parent order for each commit is important. This tool orders them based on the direction of the edges that are used to connect them. Going from the child to the parent (right-to-left), a horizontal edge comes before an upwards edge, and an upwards edge comes before a downwards edge.
+
+### Supported edges
+
+This tool supports the following ASCII edge connectors. Each edge character has restrictions on which direction the edge can connect from and to.
+
+The following directions are based on the perspective of the edge character. The parent side is to the left, and the child side is to the right.
+
+| Tokens   | Parent below           | Parent horizontal      | Parent above           | Child below            | Child horizontal       | Child above            |
+|----------|------------------------|------------------------|------------------------|------------------------|------------------------|------------------------|
+| `+`      | Yes :heavy_check_mark: | Yes :heavy_check_mark: | Yes :heavy_check_mark: | Yes :heavy_check_mark: | Yes :heavy_check_mark: | Yes :heavy_check_mark: |
+| `<`      | No  :x:                | Yes :heavy_check_mark: | No :x:                 | Yes :heavy_check_mark: | Yes :heavy_check_mark: | Yes :heavy_check_mark: |
+| `>`      | Yes :heavy_check_mark: | Yes :heavy_check_mark: | Yes :heavy_check_mark: | No :x:                 | Yes :heavy_check_mark: | No :x:                 |
+| `.,_`    | Yes :heavy_check_mark: | Yes :heavy_check_mark: | No :x:                 | Yes :heavy_check_mark: | Yes :heavy_check_mark: | No :x:                 |
+| ``'`^*`` | No  :x:                | Yes :heavy_check_mark: | Yes :heavy_check_mark: | No :x:                 | Yes :heavy_check_mark: | Yes :heavy_check_mark: |
+| `-~`     | No  :x:                | Yes :heavy_check_mark: | No :x:                 | No :x:                 | Yes :heavy_check_mark: | No :x:                 |
+| `/`      | Yes :heavy_check_mark: | No  :x:                | No :x:                 | No :x:                 | No :x:                 | Yes :heavy_check_mark: |
+| `\`      | No  :x:                | No  :x:                | Yes :heavy_check_mark: | Yes :heavy_check_mark: | No :x:                 | No :x:                 |
 
 ### git-natp adjacency list output format
 

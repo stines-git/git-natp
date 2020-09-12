@@ -114,6 +114,7 @@ declare -a CONNECTOR_PARENT_DIRECTIONS
 # Accepted child directions for connector type, in perspective of the connector.
 declare -a CONNECTOR_CHILD_DIRECTIONS
 
+# Note: Make sure the READAME is updated if you change this table.
 CONNECTORS[0]="+"
 CONNECTOR_PARENT_DIRECTIONS[0]="$HORIZONTAL $ABOVE $BELOW"
 CONNECTOR_CHILD_DIRECTIONS[0]="$HORIZONTAL $ABOVE $BELOW"
