@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -eu
 
-mapfile -t commits <(git-natp)
+mapfile -t graph <(git-natp)
 
 declare -A subject_to_hash
 
@@ -39,7 +39,34 @@ function create_commit() {
   echo "$subject ${subjects_to_hash[$id]}"
 }
 
-for commit in "${commits[@]}"
+function create_branch() {
+  branchname="$1"
+  commit="$2"
+  commit_sha="${subject_to_hash[$commit]}"
+  if [[ $branchname == "master" ]]
+  then
+    # Master branch already exists. Move it to the right place.
+    git checkout master
+    git reset --hard "$commit_sha"
+  else
+    # Other branches don't exist. Create them.
+    git checkout "$commit_sha"
+    git branch "$branchname"
+  fi
+}
+
+BRANCH_REGEX="\[[a-zA-Z0-9]+\]"
+
+for entry in "${graph[@]}"
 do
-  create_commit $commit
+  entry=($entry)
+  if [[ ${entry[0]} =~ $BRANCH_REGEX ]]
+  then
+    entry[0]=$(echo ${entry[0]} | sed 's/\[//g;s/\]//g')
+    create_branch "${entry[@]}"
+  else
+    create_commit "${entry[@]}"
+  fi
 done
+
+git checkout master
