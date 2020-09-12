@@ -6,6 +6,7 @@ ORPHAN_BRANCH="GIT_NATP_CREATE/ORPHAN_BRANCH"
 mapfile -t graph < <(git-natp)
 
 declare -A subject_to_hash
+declare -a branchnames
 
 function create_commit() {
   id="$1"
@@ -70,13 +71,13 @@ do
   then
     entry[0]=$(echo ${entry[0]} | sed 's/\[//g;s/\]//g')
     create_branch "${entry[@]}"
+    branchnames+=(${entry[0]})
   else
     create_commit "${entry[@]}"
   fi
 done
 
-# Note: master branch will not exist if repo is empty.
-if [[ ${#graph[@]} > 0 ]]
+if [[ ( -v branchnames ) && ( ${#branchnames[@]} > 0 ) ]]
 then
-  git checkout master
+  git checkout ${branchnames[0]}
 fi
