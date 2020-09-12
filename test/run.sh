@@ -5,6 +5,9 @@ TEST_DIR=$(dirname ${BASH_SOURCE[0]})
 TEST_DIR=$(cd "$TEST_DIR" >/dev/null 2>&1 && pwd)
 TMP_DIR="$TEST_DIR/tmp"
 
+rm -rf "$TMP_DIR"
+mkdir -p "$TMP_DIR"
+
 export PATH="$TEST_DIR/..:$PATH"
 
 shopt -s nullglob
@@ -12,7 +15,7 @@ shopt -s nullglob
 inputs=($TEST_DIR/*.in)
 count="${#inputs[@]}"
 
-echo "1..$((count * 2))"
+echo "1..$((count * 3))"
 
 function get_diagnostics() {
   actual="$1"
@@ -68,15 +71,12 @@ do
   fi
 done
 
-rm -rf "$TMP_DIR"
-mkdir -p "$TMP_DIR"
-
 for i in "${!inputs[@]}"
 do
   test_number=$((count + i + 1))
   input="${inputs[i]}"
   filename=$(basename "$input")
-  testcase="${filename%.in}"
+  testcase="${filename%.in} - create and compare"
 
   if [[ ( $# -gt 0 ) && ( $test_number -ne $1 ) ]]
   then
@@ -95,5 +95,34 @@ do
     echo "ok $test_number - $testcase"
   else
     echo "not ok $test_number - $testcase"
+  fi
+done
+
+for i in "${!inputs[@]}"
+do
+  test_number=$((count * 2 + i + 1))
+  input1="${inputs[i]}"
+  input2="${inputs[$(((i + 1) % count))]}"
+  filename1=$(basename "$input1")
+  filename2=$(basename "$input2")
+  testcase="${filename1%.in} - ${filename2%.in} - compare"
+
+  if [[ ( $# -gt 0 ) && ( $test_number -ne $1 ) ]]
+  then
+    echo "ok $test_number - $testcase # SKIPPED"
+    continue
+  fi
+
+  testcase_dir="$TMP_DIR/$testcase"
+  mkdir "$testcase_dir"
+  cd "$testcase_dir"
+  git init >/dev/null
+  git-natp create <"$input1"
+
+  if git-natp compare <"$input2" >/dev/null
+  then
+    echo "not ok $test_number - $testcase"
+  else
+    echo "ok $test_number - $testcase"
   fi
 done
