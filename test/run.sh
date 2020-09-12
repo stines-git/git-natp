@@ -11,8 +11,8 @@ count="${#inputs[@]}"
 echo "1..$count"
 
 function get_diagnostics() {
-  input=$1
-  output=$2
+  actual="$1"
+  output="$2"
   echo "Expected:"
   echo "========="
   cat "$output"
@@ -20,12 +20,12 @@ function get_diagnostics() {
   echo
   echo "Actual:"
   echo "======="
-  git-natp <"$input"
+  printf "$actual"
 
   echo
   echo "Diff:"
   echo "====="
-  git-natp <"$input" | diff - "$output"
+  printf "$actual" | diff - "$output"
 
   echo
 }
@@ -50,11 +50,15 @@ do
     continue
   fi
 
-  if git-natp <"$input" | cmp -s - "$output"
+  # Capture output. Note: insert EOF marker to presever trailing new-line.
+  actual=$(git-natp <"$input"; echo EOF)
+  actual="${actual%EOF}"
+
+  if printf "$actual" | cmp -s - "$output"
   then
     echo "ok $test_number - $testcase"
   else
     echo "not ok $test_number - $testcase"
-    print_diagnostics $input $output
+    print_diagnostics "$actual" $output
   fi
 done
