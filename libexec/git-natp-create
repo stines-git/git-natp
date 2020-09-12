@@ -21,37 +21,12 @@ function create_commit() {
     parents[$i]=${subject_to_hash[$parent_id]}
   done
 
-  if [[ ${#parents[@]} -eq 0 ]]
-  then
-    # Create a temporary orphan branch.
-    git checkout --orphan "$ORPHAN_BRANCH"
-  else
-    # Position HEAD to first parent.
-    git checkout "${parents[0]}"
-  fi
-
   # Create the commit.
-  if [[ ${#parents[@]} -gt 2 ]]
-  then
-    git merge --no-ff -m $subject --no-edit "${parents[@]:1}" > /dev/null
-    touch "$id"
-    git add "$id" > /dev/null
-    git commit --amend --no-edit > /dev/null
-  else
-    touch "$id"
-    git add "$id" > /dev/null
-    git commit --message "$subject" > /dev/null
-  fi
+  tree=$(git write-tree)
+  sha=$(git commit-tree ${parents[@]/#/-p } -m "$subject" "$tree")
 
   # Save the SHA.
-  subject_to_hash[$id]=$(git rev-parse --short HEAD)
-
-  if [[ ${#parents[@]} -eq 0 ]]
-  then
-    # Delete the temporary orphan branch.
-    git checkout "${subject_to_hash[$id]}"
-    git branch -d "$ORPHAN_BRANCH"
-  fi
+  subject_to_hash[$id]="$sha"
 }
 
 function create_branch() {
