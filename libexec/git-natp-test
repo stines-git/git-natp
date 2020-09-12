@@ -1,0 +1,59 @@
+#!/usr/bin/env bash
+set -eu
+
+mapfile -t graph <(git-natp)
+
+declare -A commit_to_structurehash
+declare -A branch_to_structurehash
+
+function structurehash_commit() {
+  id="$1"
+  shift
+  subject="$1"
+  shift
+  parents=($@)
+
+  # Translate parent subjects into the structure hashes.
+  for i in "${!parents[@]}"
+  do
+    parent_id=${parents[$i]}
+    parents[$i]=${commit_to_structurehash[$parent_id]}
+  done
+
+  # Hash.
+  structure=($subject ${parents[@]})
+  commit_to_structurehash[$id]=$(printf "${structure[*]}" | sha256sum)
+}
+
+for entry in "${graph[@]}"
+do
+  entry=($entry)
+  if [[ ${entry[0]} =~ $BRANCH_REGEX ]]
+  then
+    branchname=$(echo ${entry[0]} | sed 's/\[//g;s/\]//g')
+    commit=${entry[1]}
+    branch_to_structurehash[$branchname]="${commit_to_structurehash[$commit]}"
+  else
+    subject=$(echo $id | sed 's/_//g')  # Strip disambiguating underscores.
+    structurehash_commit "${entry[0]}" "$subject" "${entry[@]1:}"
+  fi
+done
+
+for branch in "${!branch_to_structurehash[@]}"
+do
+  mapfile -t git_graph <(git rev-list --topo-order --reverse --parents "$branch")
+  for entry in "${git_graph[@]}"
+  do
+    sha=${entry[0]}
+    subject=$(git show --no-patch --format=%s "$sha")
+    structurehash_commit "$sha" "$subject" "${entry[@]1:}"
+  done
+  branch_sha=$(git rev-parse "$branch")
+  if [[ ${branch_to_structurehash[$branch]} != ${commit_to_structurehash[$branch_sha]} ]]
+  then
+    echo "Branch $branch has a different structure"
+    exit 1
+  fi
+done
+
+echo "Git graph structures are equivalent"
