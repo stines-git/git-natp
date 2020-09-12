@@ -87,7 +87,7 @@ do
   testcase_dir="$TMP_DIR/$testcase"
   mkdir "$testcase_dir"
   cd "$testcase_dir"
-  git init
+  git init >/dev/null
   git-natp create <"$input"
 
   if git-natp compare <"$input"

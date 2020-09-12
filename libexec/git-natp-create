@@ -33,8 +33,8 @@ function create_branch() {
   branchname="$1"
   commit="$2"
   commit_sha="${subject_to_hash[$commit]}"
-  git checkout "$commit_sha"
-  git branch "$branchname"
+  git checkout "$commit_sha" >/dev/null 2>&1
+  git branch "$branchname" >/dev/null 2>&1
 }
 
 BRANCH_REGEX="\[[a-zA-Z0-9]+\]"
@@ -54,5 +54,5 @@ done
 
 if [[ ( -v branchnames ) && ( ${#branchnames[@]} > 0 ) ]]
 then
-  git checkout ${branchnames[0]}
+  git checkout ${branchnames[1]} >/dev/null 2>&1
 fi
