@@ -1,0 +1,44 @@
+#!/usr/bin/env bash
+set -eu
+
+mapfile -t commits <(git-natp)
+
+declare -A subject_to_hash
+
+function create_commit() {
+  subject="$1"
+  shift  # Remaining arguments are the parent subjects.
+  parents=($@)
+
+  # Translate parent subjects into SHA
+  for i in "${!parents[@]}"
+  do
+    parent_subject=${parents[$i]}
+    parents[$i]=${subject_to_hash[$parent_subject]}
+  done
+
+  # Position HEAD to first parent.
+  git checkout "${parents[0]}"
+
+  # Create the commit.
+  if [[ ${#parents[@]} -gt 2 ]]
+  then
+    git merge --no-ff -m $subject --no-edit "${parents[@]:1}" > /dev/null
+    touch "$subject"
+    git add "$subject" > /dev/null
+    git commit --amend --no-edit > /dev/null
+  else
+    touch "$subject"
+    git add "$subject" > /dev/null
+    git commit --message "$subject" > /dev/null
+  fi
+
+  # Save the SHA.
+  subjects_to_hash[$subject]=$(git rev-parse --short HEAD)
+  echo "$subject ${subjects_to_hash[$subject]}"
+}
+
+for commit in "${commits[@]}"
+do
+  create_commit $commit
+done

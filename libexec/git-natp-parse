@@ -1,0 +1,171 @@
+#!/usr/bin/env bash
+set -eu
+
+mapfile -t input
+row_count="${#input[@]}"
+col_count=0
+for row in ${!input[@]}
+do
+  line="${input[row]}"
+  line_size="${#line}"
+  if [[ $line_size -gt $col_count ]]
+  then
+    col_count="$line_size"
+  fi
+done
+
+SUBJECT_CHAR_REGEX="[a-zA-Z0-9_]"
+SUBJECT_REGEX="^$SUBJECT_CHAR_REGEX+$"
+
+function log() {
+  false && echo "$@" >> /dev/stderr
+}
+
+function inputat() {
+  row=$1
+  col=$2
+  if [[ ( row -ge 0 ) && ( col -ge 0 ) && ( -v input[row] ) ]]
+  then
+    line="${input[row]}"
+    char="${line:$col:1}"
+    if [[ $char =~ $SUBJECT_CHAR_REGEX  ]]
+    then
+      previous_char="${line:((col - 1)):1}"
+      if [[ ( $col -gt 0 ) && ( $previous_char =~ $SUBJECT_CHAR_REGEX ) ]]
+      then
+        # Return the subject from where it begins.
+        echo "$(inputat $row $((col - 1)))"
+      else
+        # Return the whole subject.
+        subject="$char"
+        while true; do
+          char="${line:((col + 1)):1}"
+          if [[ $char =~ $SUBJECT_CHAR_REGEX  ]]
+          then
+            subject="$subject$char"
+            col=$((col + 1))
+          else
+            break
+          fi
+        done
+        echo "$subject"
+      fi
+    else
+      echo "$char"
+    fi
+  else
+    echo " "
+  fi
+}
+
+ABOVE=-1
+HORIZONTAL=0
+BELOW=1
+
+# Accepted characters for connector type.
+declare -a CONNECTORS
+# Accepted parent directions for connector type, in perspective of the connector.
+declare -a CONNECTOR_PARENT_DIRECTIONS
+# Accepted child directions for connector type, in perspective of the connector.
+declare -a CONNECTOR_CHILD_DIRECTIONS
+
+CONNECTORS[0]="+"
+CONNECTOR_PARENT_DIRECTIONS[0]="$HORIZONTAL $ABOVE $BELOW"
+CONNECTOR_CHILD_DIRECTIONS[0]="$HORIZONTAL $ABOVE $BELOW"
+CONNECTORS[1]="<"
+CONNECTOR_PARENT_DIRECTIONS[1]="$HORIZONTAL"
+CONNECTOR_CHILD_DIRECTIONS[1]="$HORIZONTAL $ABOVE $BELOW"
+CONNECTORS[2]=">"
+CONNECTOR_PARENT_DIRECTIONS[2]="$HORIZONTAL $ABOVE $BELOW"
+CONNECTOR_CHILD_DIRECTIONS[2]="$HORIZONTAL"
+CONNECTORS[3]=".,_"
+CONNECTOR_PARENT_DIRECTIONS[3]="$HORIZONTAL $BELOW"
+CONNECTOR_CHILD_DIRECTIONS[3]="$HORIZONTAL $BELOW"
+CONNECTORS[4]="'\`^*"
+CONNECTOR_PARENT_DIRECTIONS[4]="$HORIZONTAL $ABOVE"
+CONNECTOR_CHILD_DIRECTIONS[4]="$HORIZONTAL $ABOVE"
+CONNECTORS[5]="-~"
+CONNECTOR_PARENT_DIRECTIONS[5]="$HORIZONTAL"
+CONNECTOR_CHILD_DIRECTIONS[5]="$HORIZONTAL"
+CONNECTORS[6]="/"
+CONNECTOR_PARENT_DIRECTIONS[6]="$BELOW"
+CONNECTOR_CHILD_DIRECTIONS[6]="$ABOVE"
+CONNECTORS[7]="\\"
+CONNECTOR_PARENT_DIRECTIONS[7]="$ABOVE"
+CONNECTOR_CHILD_DIRECTIONS[7]="$BELOW"
+
+function findparents() {
+  parent_direction=$1  # Child's perspective.
+  child_direction=$((-parent_direction))  # Connector's/Parent's perspective.
+  row=$2
+  col=$3
+  text=$(inputat $row $col)
+  log "findparents dir:$child_direction, row:$row, col:$col, text:$text"
+  if [[ $text =~ $SUBJECT_REGEX ]]
+  then
+    log " - Found parent $text"
+    echo "$text"
+  else
+    for i in "${!CONNECTORS[@]}"
+    do
+      regex="[${CONNECTORS[i]}]"
+      child_direction_acceptable="no"
+      for d in ${CONNECTOR_CHILD_DIRECTIONS[i]}
+      do
+        if [[ $d -eq $child_direction ]]
+        then
+          child_direction_acceptable="yes"
+        fi
+      done
+      if [[ ( $text =~ $regex ) && ( $child_direction_acceptable = "yes" ) ]]
+      then
+        log " - Found connector $text"
+        parents=""
+        for d in ${CONNECTOR_PARENT_DIRECTIONS[i]}
+        do
+          log " - - Exploring direction $d"
+          parents="$parents $(findparents $d $((row + d)) $((col - 1)))"
+        done
+        echo "$parents"
+      fi
+    done
+  fi
+}
+
+declare -A visited_subjects
+
+for col in $(seq 0 $col_count)
+do
+  for row in $(seq 0 $row_count)
+  do
+    subject=$(inputat $row $col)
+    if [[ -v visited_subjects[$subject] ]]
+    then
+      # Skip subjects we have already processed.
+      continue
+    fi
+
+    if [[ $subject =~ $SUBJECT_REGEX ]]
+    then
+      visited_subjects[$subject]="yes"
+
+      # First find the parents on the left of the subject.
+      parents="$(findparents $HORIZONTAL $row $((col - 1)))"
+
+      # Then find the parents above the subject.
+      for parent_col in $(seq $((col - 1)) $((col + ${#subject} - 1)))
+      do
+        parents="$parents $(findparents $ABOVE $((row - 1)) $parent_col)"
+      done
+
+      # Then find the parents below the subject.
+      for parent_col in $(seq $((col - 1)) $((col + ${#subject} - 1)))
+      do
+        parents="$parents $(findparents $BELOW $((row + 1)) $parent_col)"
+      done
+
+      parents=($parents)
+      echo "$subject ${parents[@]}"
+    fi
+  done
+done

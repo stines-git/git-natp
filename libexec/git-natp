@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+set -eu
+
+$command=$1
+case "$command" in
+"" )
+  git-natp-parse "$@"
+  ;;
+create )
+  git-natp-create "$@"
+  ;;
+esac
