@@ -17,8 +17,18 @@ done
 SUBJECT_CHAR_REGEX="[a-zA-Z0-9]"
 SUBJECT_REGEX="^$SUBJECT_CHAR_REGEX+$"
 
+log_indent=""
+
+function log_push() {
+  log_indent="$log_indent│"
+}
+
+function log_pop() {
+  log_indent="${log_indent%│}"
+}
+
 function log() {
-  false && echo "$@" >> /dev/stderr || true
+  true && echo "$log_indent$@" >> /dev/stderr || true
 }
 
 function inputat() {
@@ -106,10 +116,11 @@ function findparents() {
   col=$3
   has_found_connector=$4
   text=$(inputat $row $col)
-  log " - findparents dir:$child_direction, row:$row, col:$col, text:$text"
+  log "findparents dir:$child_direction, row:$row, col:$col, text:$text"
+  log_push
   if [[ ( $text =~ $SUBJECT_REGEX ) && ( $has_found_connector = $FOUND_CONNECTOR ) ]]
   then
-    log " - - Found parent $text"
+    log "Found parent $text"
     echo "$text"
   else
     for i in "${!CONNECTORS[@]}"
@@ -125,17 +136,22 @@ function findparents() {
       done
       if [[ ( $text =~ $regex ) && ( $child_direction_acceptable = "yes" ) ]]
       then
-        log " - - Found connector $text"
+        log "Found connector $text"
+        log_push
         parents=""
         for d in ${CONNECTOR_PARENT_DIRECTIONS[i]}
         do
-          log " - - - Exploring direction $d"
+          log "Exploring direction $d"
+          log_push
           parents="$parents $(findparents $d $((row + d)) $((col - 1)) $FOUND_CONNECTOR)"
+          log_pop
         done
+        log_pop
         echo "$parents"
       fi
     done
   fi
+  log_pop
 }
 
 declare -A visited_subjects
@@ -157,21 +173,27 @@ do
 
       # First find the parents on the left of the subject.
       log "Finding left parents for $subject"
+      log_push
       parents="$(findparents $HORIZONTAL $row $((col - 1)) $FINDING_CONNECTOR)"
+      log_pop
 
       # Then find the parents above the subject.
       log "Finding above parents for $subject"
+      log_push
       for parent_col in $(seq $((col - 1)) $((col + ${#subject} - 1)))
       do
         parents="$parents $(findparents $ABOVE $((row - 1)) $parent_col $FINDING_CONNECTOR)"
       done
+      log_pop
 
       # Then find the parents below the subject.
       log "Finding below parents for $subject"
+      log_push
       for parent_col in $(seq $((col - 1)) $((col + ${#subject} - 1)))
       do
         parents="$parents $(findparents $BELOW $((row + 1)) $parent_col $FINDING_CONNECTOR)"
       done
+      log_pop
 
       line=($subject $parents)
       echo "${line[@]}"
