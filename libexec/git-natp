@@ -1,8 +1,14 @@
 #!/usr/bin/env bash
 set -eu
 
-$command=$1
-case "$command" in
+if [[ $# -gt 0 ]]
+then
+  cmd=$1
+  shift
+else
+  cmd=""
+fi
+case "$cmd" in
 "" )
   git-natp-parse "$@"
   ;;
