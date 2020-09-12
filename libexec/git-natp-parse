@@ -14,7 +14,7 @@ do
   fi
 done
 
-SUBJECT_CHAR_REGEX="[a-zA-Z0-9_]"
+SUBJECT_CHAR_REGEX="[a-zA-Z0-9]"
 SUBJECT_REGEX="^$SUBJECT_CHAR_REGEX+$"
 
 function log() {
