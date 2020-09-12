@@ -6,11 +6,12 @@ mapfile -t commits <(git-natp)
 declare -A subject_to_hash
 
 function create_commit() {
-  subject="$1"
+  id="$1"
+  subject=$(echo $id | sed 's/_//g')  # Strip disambiguating underscores.
   shift  # Remaining arguments are the parent subjects.
   parents=($@)
 
-  # Translate parent subjects into SHA
+  # Translate parent subjects into SHA.
   for i in "${!parents[@]}"
   do
     parent_subject=${parents[$i]}
@@ -24,12 +25,12 @@ function create_commit() {
   if [[ ${#parents[@]} -gt 2 ]]
   then
     git merge --no-ff -m $subject --no-edit "${parents[@]:1}" > /dev/null
-    touch "$subject"
-    git add "$subject" > /dev/null
+    touch "$id"
+    git add "$id" > /dev/null
     git commit --amend --no-edit > /dev/null
   else
-    touch "$subject"
-    git add "$subject" > /dev/null
+    touch "$id"
+    git add "$id" > /dev/null
     git commit --message "$subject" > /dev/null
   fi
 
