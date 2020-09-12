@@ -62,6 +62,7 @@ do
         done
 
         # Disambiguate commits with the same subject using underscore suffixes
+        original_subject="$subject"
         while [[ -v subject_to_coords[$subject] ]]
         do
           subject="${subject}_"
@@ -72,7 +73,7 @@ do
         # Record it in our token tables.
         subject_to_coords[$subject]=$coords
         subjects+=("$subject")
-        for subject_col in $(seq $col $((col + ${#subject} - 1)))
+        for subject_col in $(seq $col $((col + ${#original_subject} - 1)))
         do
           char_coords="$row $subject_col"
           tokens[$char_coords]="$subject"
