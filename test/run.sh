@@ -2,6 +2,8 @@
 set -eu
 
 TEST_DIR=$(dirname ${BASH_SOURCE[0]})
+TEST_DIR=$(cd TEST_DIR >/dev/null 2>&1 && pwd)
+TMP_DIR="$TEST_DIR/tmp"
 
 export PATH="$TEST_DIR/../libexec:$PATH"
 
@@ -10,7 +12,7 @@ shopt -s nullglob
 inputs=($TEST_DIR/*.in)
 count="${#inputs[@]}"
 
-echo "1..$count"
+echo "1..$((count * 2))"
 
 function get_diagnostics() {
   actual="$1"
@@ -62,5 +64,34 @@ do
   else
     echo "not ok $test_number - $testcase"
     print_diagnostics "$actual" $output
+  fi
+done
+
+rm -rf "$TMP_DIR"
+mkdir -p "$TMP_DIR"
+
+for i in "${!inputs[@]}"
+do
+  test_number=$((count + i + 1))
+  input="${inputs[i]}"
+  testcase="${input%.in}"
+
+  if [[ ( $# -gt 0 ) && ( $test_number -ne $1 ) ]]
+  then
+    echo "ok $test_number - $testcase # SKIPPED"
+    continue
+  fi
+
+  testcase_dir="$TMP_DIR/$testcase"
+  mkdir "$testcase_dir"
+  cd "$testcase_dir"
+  git init
+  git-natp create <"$input"
+
+  if git-natp compare <"$input"
+  then
+    echo "ok $test_number - $testcase"
+  else
+    echo "not ok $test_number - $testcase"
   fi
 done
