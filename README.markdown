@@ -23,4 +23,10 @@ TODO
 
 ## Testing
 
-TODO
+To run the tests, just execute the `run.sh` script in the `test` folder.
+
+```sh
+./test/run.sh
+```
+
+The output should be in TAP format.
