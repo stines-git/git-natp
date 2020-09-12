@@ -69,4 +69,8 @@ do
   fi
 done
 
-git checkout master
+# Note: master branch will not exist if repo is empty.
+if [[ ${#graph[@]} > 0 ]]
+then
+  git checkout master
+fi
