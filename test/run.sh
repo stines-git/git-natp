@@ -5,7 +5,7 @@ TEST_DIR=$(dirname ${BASH_SOURCE[0]})
 TEST_DIR=$(cd "$TEST_DIR" >/dev/null 2>&1 && pwd)
 TMP_DIR="$TEST_DIR/tmp"
 
-export PATH="$TEST_DIR/../libexec:$PATH"
+export PATH="$TEST_DIR/..:$PATH"
 
 shopt -s nullglob
 

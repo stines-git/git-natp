@@ -1,0 +1,13 @@
+{
+  "name": "git-natp",
+  "version": "0.0.1",
+  "description": "Git ASCII commit graph parser, repository generator, and checker",
+  "global": "false",
+  "install": "make install",
+  "scripts": [
+    "git-natp",
+    "git-natp-parse",
+    "git-natp-create",
+    "git-natp-compare"
+  ]
+}
