@@ -1,11 +1,13 @@
 #!/usr/bin/env bash
 set -eu
 
-export PATH="$(pwd)/../libexec:$PATH"
+TEST_DIR=$(dirname ${BASH_SOURCE[0]})
+
+export PATH="$TEST_DIR/../libexec:$PATH"
 
 shopt -s nullglob
 
-inputs=(*.in)
+inputs=($TEST_DIR/*.in)
 count="${#inputs[@]}"
 
 echo "1..$count"
