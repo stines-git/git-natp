@@ -90,7 +90,7 @@ do
   git init >/dev/null
   git-natp create <"$input"
 
-  if git-natp compare <"$input"
+  if git-natp compare <"$input" >/dev/null
   then
     echo "ok $test_number - $testcase"
   else
