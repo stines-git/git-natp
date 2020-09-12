@@ -19,14 +19,17 @@ Both commands accept the commit graph from `stdin`.
 
 ## Install
 
-TODO
+To install this globally, run `sudo make install` and the scripts will be copied to
+`/usr/local/bin/...`. Similarly, `sudo make uninstall` removes them.
+
 
 ## Testing
 
-To run the tests, just execute the `run.sh` script in the `test` folder.
+To run the tests, just execute the `run.sh` script in the `test` folder or run `make test`.
 
 ```sh
 ./test/run.sh
 ```
 
 The output should be in TAP format.
+
