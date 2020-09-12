@@ -20,10 +20,41 @@ Both commands accept the commit graph from `stdin`.
 
 ## Install
 
-To install this globally, run `sudo make install` and the scripts will be copied to
+You can install this using `bpkg install ErnWong/git-natp` using [bpkg](github.com/bpkg/bpgk).
+
+Alternatively, download this repo and run run `sudo make install` and the scripts will be copied to
 `/usr/local/bin/...`. Similarly, `sudo make uninstall` removes them.
 
-## Diagram input format
+## Usage information
+
+###  `git natp create`
+
+Run this command in an empty initialised git repository.
+
+**Caution: Don't run `git natp create` in an existing repository or it could mess up your repository.**
+
+### `git natp compare`
+
+Run this command in an existing git repository. If the repository commit graph matches the
+diagram you supply, then it will return an exit code of 0 and output the following to `stdout`.
+
+```
+Git graph structures are equivalent
+```
+
+If the commit graphs are not the same, then it will return an exit code of 1 and output one
+of the following reasons to `stdout`.
+
+```
+Branch <branch name> has a different structure.
+Branch <branch name> does not exist.
+Branch <branch name> exists but was not expected.
+```
+
+Since this tool checks the graph structure on a branch-by-branch basis, commits that are not
+accessible from any branch (i.e. detached commits) will not be checked.
+
+### Diagram input format
 
 - Commit names (aka their subjects) are sequences of alphanumeric characters with no space in between.
 - The diagram must be topologically sorted left to right, so that the commits to the left are the parents of the commits to the right.
@@ -31,7 +62,7 @@ To install this globally, run `sudo make install` and the scripts will be copied
 - Edges describe the parents of each commit, and need to be touching the commit name.
 - The parent order for each commit is important. This tool orders them based on the direction of the edges that are used to connect them. Going from the child to the parent (right-to-left), a horizontal edge comes before an upwards edge, and an upwards edge comes before a downwards edge.
 
-## Supported edges
+### Supported edges
 
 This tool supports the following ASCII edge connectors. Each edge character has restrictions on which direction the edge can connect from and to.
 
@@ -48,7 +79,7 @@ The following directions are based on the perspective of the edge character. The
 | `/`      | Yes :heavy_check_mark: | No  :x:                | No :x:                 | No :x:                 | No :x:                 | Yes :heavy_check_mark: |
 | `\`      | No  :x:                | No  :x:                | Yes :heavy_check_mark: | Yes :heavy_check_mark: | No :x:                 | No :x:                 |
 
-## git-natp adjacency list output format
+### git-natp adjacency list output format
 
 Each line corresponds to a commit on the graph. The first token is the commit subject.
 Subsequent tokens are the commit's parents in order. After every commit has been listed,
@@ -82,3 +113,8 @@ To run the tests, just execute the `run.sh` script in the `test` folder or run `
 
 The output should be in TAP format.
 
+To run a specific test number, supply it as a single argument:
+
+```sh
+./test/run.sh 10
+```
