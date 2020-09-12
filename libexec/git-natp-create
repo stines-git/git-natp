@@ -14,8 +14,8 @@ function create_commit() {
   # Translate parent subjects into SHA.
   for i in "${!parents[@]}"
   do
-    parent_subject=${parents[$i]}
-    parents[$i]=${subject_to_hash[$parent_subject]}
+    parent_id=${parents[$i]}
+    parents[$i]=${subject_to_hash[$parent_id]}
   done
 
   # Position HEAD to first parent.
@@ -35,8 +35,8 @@ function create_commit() {
   fi
 
   # Save the SHA.
-  subjects_to_hash[$subject]=$(git rev-parse --short HEAD)
-  echo "$subject ${subjects_to_hash[$subject]}"
+  subjects_to_hash[$id]=$(git rev-parse --short HEAD)
+  echo "$subject ${subjects_to_hash[$id]}"
 }
 
 for commit in "${commits[@]}"
