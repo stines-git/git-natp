@@ -62,6 +62,11 @@ ABOVE=-1
 HORIZONTAL=0
 BELOW=1
 
+# We want at least one connector between two subjects.
+# We keep track using these values
+FOUND_CONNECTOR="found-connector"
+FINDING_CONNECTOR="finding-connector"
+
 # Accepted characters for connector type.
 declare -a CONNECTORS
 # Accepted parent directions for connector type, in perspective of the connector.
@@ -99,9 +104,10 @@ function findparents() {
   child_direction=$((-parent_direction))  # Connector's/Parent's perspective.
   row=$2
   col=$3
+  has_found_connector=$4
   text=$(inputat $row $col)
   log " - findparents dir:$child_direction, row:$row, col:$col, text:$text"
-  if [[ $text =~ $SUBJECT_REGEX ]]
+  if [[ ( $text =~ $SUBJECT_REGEX ) && ( $has_found_connector = $FOUND_CONNECTOR ) ]]
   then
     log " - - Found parent $text"
     echo "$text"
@@ -124,7 +130,7 @@ function findparents() {
         for d in ${CONNECTOR_PARENT_DIRECTIONS[i]}
         do
           log " - - - Exploring direction $d"
-          parents="$parents $(findparents $d $((row + d)) $((col - 1)))"
+          parents="$parents $(findparents $d $((row + d)) $((col - 1)) $FOUND_CONNECTOR)"
         done
         echo "$parents"
       fi
@@ -151,20 +157,20 @@ do
 
       # First find the parents on the left of the subject.
       log "Finding left parents for $subject"
-      parents="$(findparents $HORIZONTAL $row $((col - 1)))"
+      parents="$(findparents $HORIZONTAL $row $((col - 1)) $FINDING_CONNECTOR)"
 
       # Then find the parents above the subject.
       log "Finding above parents for $subject"
       for parent_col in $(seq $((col - 1)) $((col + ${#subject} - 1)))
       do
-        parents="$parents $(findparents $ABOVE $((row - 1)) $parent_col)"
+        parents="$parents $(findparents $ABOVE $((row - 1)) $parent_col $FINDING_CONNECTOR)"
       done
 
       # Then find the parents below the subject.
       log "Finding below parents for $subject"
       for parent_col in $(seq $((col - 1)) $((col + ${#subject} - 1)))
       do
-        parents="$parents $(findparents $BELOW $((row + 1)) $parent_col)"
+        parents="$parents $(findparents $BELOW $((row + 1)) $parent_col $FINDING_CONNECTOR)"
       done
 
       line=($subject $parents)
