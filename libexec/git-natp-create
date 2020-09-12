@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 set -eu
 
+ORPHAN_BRANCH="GIT_NATP_CREATE/ORPHAN_BRANCH"
+
 mapfile -t graph < <(git-natp)
 
 declare -A subject_to_hash
@@ -18,8 +20,14 @@ function create_commit() {
     parents[$i]=${subject_to_hash[$parent_id]}
   done
 
-  # Position HEAD to first parent.
-  git checkout "${parents[0]}"
+  if [[ ${#parents[@]} -eq 0 ]]
+  then
+    # Create a temporary orphan branch.
+    git checkout --orphan "$ORPHAN_BRANCH"
+  else
+    # Position HEAD to first parent.
+    git checkout "${parents[0]}"
+  fi
 
   # Create the commit.
   if [[ ${#parents[@]} -gt 2 ]]
@@ -36,23 +44,21 @@ function create_commit() {
 
   # Save the SHA.
   subjects_to_hash[$id]=$(git rev-parse --short HEAD)
-  echo "$subject ${subjects_to_hash[$id]}"
+
+  if [[ ${#parents[@]} -eq 0 ]]
+  then
+    # Delete the temporary orphan branch.
+    git checkout "${subjects_to_hash[$id]}"
+    git branch -d "$ORPHAN_BRANCH"
+  fi
 }
 
 function create_branch() {
   branchname="$1"
   commit="$2"
   commit_sha="${subject_to_hash[$commit]}"
-  if [[ $branchname == "master" ]]
-  then
-    # Master branch already exists. Move it to the right place.
-    git checkout master
-    git reset --hard "$commit_sha"
-  else
-    # Other branches don't exist. Create them.
-    git checkout "$commit_sha"
-    git branch "$branchname"
-  fi
+  git checkout "$commit_sha"
+  git branch "$branchname"
 }
 
 BRANCH_REGEX="\[[a-zA-Z0-9]+\]"
