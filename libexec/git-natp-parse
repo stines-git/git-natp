@@ -100,10 +100,10 @@ function findparents() {
   row=$2
   col=$3
   text=$(inputat $row $col)
-  log "findparents dir:$child_direction, row:$row, col:$col, text:$text"
+  log " - findparents dir:$child_direction, row:$row, col:$col, text:$text"
   if [[ $text =~ $SUBJECT_REGEX ]]
   then
-    log " - Found parent $text"
+    log " - - Found parent $text"
     echo "$text"
   else
     for i in "${!CONNECTORS[@]}"
@@ -119,11 +119,11 @@ function findparents() {
       done
       if [[ ( $text =~ $regex ) && ( $child_direction_acceptable = "yes" ) ]]
       then
-        log " - Found connector $text"
+        log " - - Found connector $text"
         parents=""
         for d in ${CONNECTOR_PARENT_DIRECTIONS[i]}
         do
-          log " - - Exploring direction $d"
+          log " - - - Exploring direction $d"
           parents="$parents $(findparents $d $((row + d)) $((col - 1)))"
         done
         echo "$parents"
@@ -150,15 +150,18 @@ do
       visited_subjects[$subject]="yes"
 
       # First find the parents on the left of the subject.
+      log "Finding left parents for $subject"
       parents="$(findparents $HORIZONTAL $row $((col - 1)))"
 
       # Then find the parents above the subject.
+      log "Finding above parents for $subject"
       for parent_col in $(seq $((col - 1)) $((col + ${#subject} - 1)))
       do
         parents="$parents $(findparents $ABOVE $((row - 1)) $parent_col)"
       done
 
       # Then find the parents below the subject.
+      log "Finding below parents for $subject"
       for parent_col in $(seq $((col - 1)) $((col + ${#subject} - 1)))
       do
         parents="$parents $(findparents $BELOW $((row + 1)) $parent_col)"
