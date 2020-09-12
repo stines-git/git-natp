@@ -43,7 +43,7 @@ done
 
 for branch in "${!branch_to_structurehash[@]}"
 do
-  if git show-ref --verify --quiet "refs/head/$branch"
+  if git show-ref --verify --quiet "refs/heads/$branch"
   then
     mapfile -t git_graph < <(git rev-list --topo-order --reverse --parents "$branch")
     for entry in "${git_graph[@]}"
