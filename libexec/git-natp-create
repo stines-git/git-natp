@@ -43,12 +43,12 @@ function create_commit() {
   fi
 
   # Save the SHA.
-  subjects_to_hash[$id]=$(git rev-parse --short HEAD)
+  subject_to_hash[$id]=$(git rev-parse --short HEAD)
 
   if [[ ${#parents[@]} -eq 0 ]]
   then
     # Delete the temporary orphan branch.
-    git checkout "${subjects_to_hash[$id]}"
+    git checkout "${subject_to_hash[$id]}"
     git branch -d "$ORPHAN_BRANCH"
   fi
 }
