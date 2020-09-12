@@ -43,6 +43,13 @@ do
   input="${inputs[i]}"
   testcase="${input%.in}"
   output="$testcase.out"
+
+  if [[ ( $# -gt 0 ) && ( $test_number -ne $1 ) ]]
+  then
+    echo "ok $test_number - $testcase # SKIPPED"
+    continue
+  fi
+
   if git-natp <"$input" | cmp -s - "$output"
   then
     echo "ok $test_number - $testcase"
