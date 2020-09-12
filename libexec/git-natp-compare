@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -eu
 
-mapfile -t graph <(git-natp)
+mapfile -t graph < <(git-natp)
 
 declare -A commit_to_structurehash
 declare -A branch_to_structurehash
