@@ -15,9 +15,9 @@ do
 done
 
 SUBJECT_CHAR_REGEX="[a-zA-Z0-9]"
-SUBJECT_REGEX="^$SUBJECT_CHAR_REGEX+$"
+SUBJECT_REGEX="^$SUBJECT_CHAR_REGEX+_*$"
 
-LOGGING_LEVEL="quiet"  # or "verbose"
+LOGGING_LEVEL="quiet"  # "quiet" or "verbose"
 log_indent=""
 
 function log_push() {
@@ -32,38 +32,66 @@ function log() {
   [[ $LOGGING_LEVEL = "verbose" ]]  && echo "$log_indent$@" >> /dev/stderr || true
 }
 
-function inputat() {
-  row=$1
-  col=$2
-  if [[ ( row -ge 0 ) && ( col -ge 0 ) && ( -v input[row] ) ]]
-  then
-    line="${input[row]}"
-    char="${line:$col:1}"
-    if [[ $char =~ $SUBJECT_CHAR_REGEX  ]]
+declare -A tokens
+declare -a subjects
+declare -A subject_to_coords
+
+log "Tokenization step"
+log_push
+for col in $(seq 0 $((col_count - 1)))
+do
+  for row in $(seq 0 $((row_count - 1)))
+  do
+    coords="$row $col"
+    if [[ ! -v tokens[$coords] ]]
     then
-      previous_char="${line:((col - 1)):1}"
-      if [[ ( $col -gt 0 ) && ( $previous_char =~ $SUBJECT_CHAR_REGEX ) ]]
+      line="${input[$row]}"
+      char="${line:$col:1}"
+      if [[ $char =~ $SUBJECT_CHAR_REGEX  ]]
       then
-        # Return the subject from where it begins.
-        echo "$(inputat $row $((col - 1)))"
-      else
-        # Return the whole subject.
+        # Retrieve the whole subject.
         subject="$char"
         while true; do
-          char="${line:((col + 1)):1}"
+          char="${line:((col + ${#subject})):1}"
           if [[ $char =~ $SUBJECT_CHAR_REGEX  ]]
           then
             subject="$subject$char"
-            col=$((col + 1))
           else
             break
           fi
         done
-        echo "$subject"
+
+        # Disambiguate commits with the same subject using underscore suffixes
+        while [[ -v subject_to_coords[$subject] ]]
+        do
+          subject="${subject}_"
+        done
+
+        log "Found subject $subject @ $coords"
+
+        # Record it in our token tables.
+        subject_to_coords[$subject]=$coords
+        subjects+=("$subject")
+        for subject_col in $(seq $col $((col + ${#subject} - 1)))
+        do
+          char_coords="$row $subject_col"
+          tokens[$char_coords]="$subject"
+        done
+      else
+        tokens[$coords]="$char"
       fi
-    else
-      echo "$char"
     fi
+  done
+done
+log_pop
+
+function inputat() {
+  row=$1
+  col=$2
+  coords="$row $col"
+  if [[ -v tokens[$coords] ]]
+  then
+    echo "${tokens[$coords]}"
   else
     echo " "
   fi
@@ -155,49 +183,37 @@ function findparents() {
   log_pop
 }
 
-declare -A visited_subjects
-
-for col in $(seq 0 $col_count)
+for subject in "${subjects[@]}"
 do
-  for row in $(seq 0 $row_count)
+  coords=(${subject_to_coords[$subject]})
+  log "Subject: $subject @ ${coords[@]}"
+  row="${coords[0]}"
+  col="${coords[1]}"
+
+  # First find the parents on the left of the subject.
+  log "Finding left parents for $subject"
+  log_push
+  parents="$(findparents $HORIZONTAL $row $((col - 1)) $FINDING_CONNECTOR)"
+  log_pop
+
+  # Then find the parents above the subject.
+  log "Finding above parents for $subject"
+  log_push
+  for parent_col in $(seq $((col - 1)) $((col + ${#subject} - 1)))
   do
-    subject=$(inputat $row $col)
-    if [[ -v visited_subjects[$subject] ]]
-    then
-      # Skip subjects we have already processed.
-      continue
-    fi
-
-    if [[ $subject =~ $SUBJECT_REGEX ]]
-    then
-      visited_subjects[$subject]="yes"
-
-      # First find the parents on the left of the subject.
-      log "Finding left parents for $subject"
-      log_push
-      parents="$(findparents $HORIZONTAL $row $((col - 1)) $FINDING_CONNECTOR)"
-      log_pop
-
-      # Then find the parents above the subject.
-      log "Finding above parents for $subject"
-      log_push
-      for parent_col in $(seq $((col - 1)) $((col + ${#subject} - 1)))
-      do
-        parents="$parents $(findparents $ABOVE $((row - 1)) $parent_col $FINDING_CONNECTOR)"
-      done
-      log_pop
-
-      # Then find the parents below the subject.
-      log "Finding below parents for $subject"
-      log_push
-      for parent_col in $(seq $((col - 1)) $((col + ${#subject} - 1)))
-      do
-        parents="$parents $(findparents $BELOW $((row + 1)) $parent_col $FINDING_CONNECTOR)"
-      done
-      log_pop
-
-      line=($subject $parents)
-      echo "${line[@]}"
-    fi
+    parents="$parents $(findparents $ABOVE $((row - 1)) $parent_col $FINDING_CONNECTOR)"
   done
+  log_pop
+
+  # Then find the parents below the subject.
+  log "Finding below parents for $subject"
+  log_push
+  for parent_col in $(seq $((col - 1)) $((col + ${#subject} - 1)))
+  do
+    parents="$parents $(findparents $BELOW $((row + 1)) $parent_col $FINDING_CONNECTOR)"
+  done
+  log_pop
+
+  line=($subject $parents)
+  echo "${line[@]}"
 done
