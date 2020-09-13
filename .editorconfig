@@ -1,0 +1,17 @@
+root = true
+
+# Most files, including package.json and extensionless shell scripts.
+[*]
+end_of_line = lf
+insert_final_newline = true
+charset = utf-8
+indent_style = space
+indent_size = 2
+
+[Makefile]
+indent_style = tab
+
+# The bats tests use heredocs, so we need tab indentations
+# to indent the delimiters.
+[*.bats]
+indent_style = tab
