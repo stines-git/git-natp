@@ -15,7 +15,7 @@ shopt -s nullglob
 inputs=($TEST_DIR/*.in)
 count="${#inputs[@]}"
 
-echo "1..$((count * 3))"
+echo "1..$((count * 4))"
 
 function get_diagnostics() {
   actual="$1"
@@ -49,7 +49,7 @@ do
   test_number=$((i + 1))
   input="${inputs[i]}"
   filename=$(basename "$input")
-  testcase="${filename%.in}"
+  testcase="${filename%.in} parse"
   output="${input%.in}.out"
 
   if [[ ( $# -gt 0 ) && ( $test_number -ne $1 ) ]]
@@ -104,7 +104,7 @@ do
   input2="${inputs[$(((i + 1) % count))]}"
   filename1=$(basename "$input1")
   filename2=$(basename "$input2")
-  testcase="${filename1%.in} - ${filename2%.in} - compare"
+  testcase="${filename1%.in} - ${filename2%.in} - compare same subjects different structure"
 
   if [[ ( $# -gt 0 ) && ( $test_number -ne $1 ) ]]
   then
@@ -115,9 +115,35 @@ do
   testcase_dir="$TMP_DIR/$testcase"
   mkdir "$testcase_dir"
   cd "$testcase_dir"
-  git-natp create <"$input1"
+  sed "s/[a-zA-Z0-9]/A/g" <"$input1" | git-natp create
 
-  if git-natp compare <"$input2" >/dev/null
+  if sed "s/[a-zA-Z0-9]/A/g" <"$input2" | git-natp compare >/dev/null
+  then
+    echo "not ok $test_number - $testcase"
+  else
+    echo "ok $test_number - $testcase"
+  fi
+done
+
+for i in "${!inputs[@]}"
+do
+  test_number=$((count * 3 + i + 1))
+  input="${inputs[i]}"
+  filename=$(basename "$input")
+  testcase="${filename%.in} - compare same structure different subjects"
+
+  if [[ ( $# -gt 0 ) && ( $test_number -ne $1 ) ]]
+  then
+    echo "ok $test_number - $testcase # SKIPPED"
+    continue
+  fi
+
+  testcase_dir="$TMP_DIR/$testcase"
+  mkdir "$testcase_dir"
+  cd "$testcase_dir"
+  git-natp create <"$input"
+
+  if sed "s/[a-zA-Z0-9]/A/g" <"$input" | git-natp compare >/dev/null
   then
     echo "not ok $test_number - $testcase"
   else
