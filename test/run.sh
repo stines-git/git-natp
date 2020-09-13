@@ -104,9 +104,9 @@ do
       changed_file=(${changed_files[0]})
       if [[ ! ( "${changed_file[0]}" =~ ^A+$ ) ]]
       then
-        echo "Change: '${changed_file[0]}'"
         echo "not ok $test_number - $testcase"
         echo "# Commit $commit from branch $branch did not add file: ${changed_file[@]}"
+        echo "# The change was: ${changed_file[@]}"
         break
       fi
     done
