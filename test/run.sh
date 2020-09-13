@@ -15,7 +15,7 @@ shopt -s nullglob
 inputs=($TEST_DIR/*.in)
 count="${#inputs[@]}"
 
-echo "1..$((count * 5))"
+echo "1..$((count * 5 + 1))"
 
 function get_diagnostics() {
   expected="$1"
@@ -205,3 +205,46 @@ do
     echo "ok $test_number - $testcase"
   fi
 done
+
+test_number=$((count * 5 + 1))
+testcase="Custom commit commands"
+if [[ ( $# -gt 0 ) && ( $test_number -ne $1 ) ]]
+then
+  echo "ok $test_number - $testcase # SKIPPED"
+else
+  testcase_dir="$TMP_DIR/$testcase"
+  mkdir "$testcase_dir"
+  cd "$testcase_dir"
+  git-natp create \
+    --cmd A "touch newfile" \
+    --cmd D "rm newfile;touch other another" \
+    --cmd F "echo change >> another" \
+<<-"EOF"
+    A---B---C----F master
+         `D----E'
+EOF
+
+  function assert_file_changes() {
+    rev=$1
+    subject=$2
+    expected=$3
+    echo "$expected"
+    actual=$(git diff-tree --no-commit-id --name-status -r -m -c --root "$rev")
+    echo "$actual"
+    if [[ "$expected" != "$actual" ]]
+    then
+      echo "not ok $test_number - $testcase"
+      echo "# Commit $subject have unexpected or missing changes"
+      print_diagnostics "$expected" "$actual"
+      exit 1
+    fi
+  }
+
+  rev_A="master~3"
+  rev_D="master^2~"
+  rev_F="master"
+
+  assert_file_changes "$rev_A" "A" $'A\tfiles/A\nA\tnewfile' || exit 1
+  assert_file_changes "$rev_D" "D" $'A\tfiles/D\nD\tnewfile\nA\tother\nA\tanother' || exit 1
+  assert_file_changes "$rev_F" "F" $'A\tfiles/F\nM\another' || exit 1
+fi
