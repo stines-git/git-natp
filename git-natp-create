@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 set -eu
 
+COMMIT_ID_FILE="id"
+
 # Quit early if we are in an non-empty directory.
 if [[ -n "$(ls -A)" ]]
 then
@@ -29,9 +31,12 @@ function create_commit() {
     parents[$i]=${subject_to_hash[$parent_id]}
   done
 
-  # Create the commit.
+  # Create the commit. Dummy file with $id is added to ensure unique commits.
+  echo "$id" > "$COMMIT_ID_FILE"
+  git add "$COMMIT_ID_FILE" >/dev/null
   tree=$(git write-tree)
   sha=$(git commit-tree ${parents[@]/#/-p } -m "$subject" "$tree")
+  git checkout "$sha" >/dev/null 2>&1
 
   # Save the SHA.
   subject_to_hash[$id]="$sha"
