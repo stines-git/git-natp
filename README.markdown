@@ -22,8 +22,14 @@ Both commands accept the commit graph from `stdin`.
 
 You can install this using `bpkg install ErnWong/git-natp` using [bpkg](https://github.com/bpkg/bpkg).
 
-Alternatively, download this repo and run run `sudo make install` and the scripts will be copied to
-`/usr/local/bin/...`. Similarly, `sudo make uninstall` removes them.
+Alternatively, download this repo and run `sudo make install` and the scripts will be copied to
+`/usr/local/bin/...`. Similarly, `sudo make uninstall` removes them. To install them to your
+home directory without using `sudo`, you can run the following, which is what the `bpkg` command
+does.
+
+```sh
+PREFIX="$HOME/.local" make install
+```
 
 ## Usage information
 
