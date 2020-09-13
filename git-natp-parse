@@ -35,6 +35,7 @@ function log() {
 declare -A tokens
 declare -a subjects
 declare -A subject_to_coords
+declare -A subject_length
 
 log "Tokenization step"
 log_push
@@ -61,19 +62,24 @@ do
           fi
         done
 
+        # Record its length before adding underscores.
+        original_length="${#subject}"
+
         # Disambiguate commits with the same subject using underscore suffixes
-        original_subject="$subject"
         while [[ -v subject_to_coords[$subject] ]]
         do
           subject="${subject}_"
         done
+
+        # Map the new subject to the old length.
+        subject_length[$subject]="$original_length"
 
         log "Found subject $subject @ $coords"
 
         # Record it in our token tables.
         subject_to_coords[$subject]=$coords
         subjects+=("$subject")
-        for subject_col in $(seq $col $((col + ${#original_subject} - 1)))
+        for subject_col in $(seq $col $((col + ${subject_length[$subject]} - 1)))
         do
           char_coords="$row $subject_col"
           tokens[$char_coords]="$subject"
@@ -217,7 +223,7 @@ do
   # Then find the parents above the subject.
   log "Finding parents above"
   log_push
-  for parent_col in $(seq $((col - 1)) $((col + ${#subject} - 1)))
+  for parent_col in $(seq $((col - 1)) $((col + ${subject_length[$subject]} - 1)))
   do
     parents="$parents $(findparents $ABOVE $((row - 1)) $parent_col $FINDING_CONNECTOR)"
   done
@@ -226,7 +232,7 @@ do
   # Then find the parents below the subject.
   log "Finding parents below"
   log_push
-  for parent_col in $(seq $((col - 1)) $((col + ${#subject} - 1)))
+  for parent_col in $(seq $((col - 1)) $((col + ${subject_length[$subject]} - 1)))
   do
     parents="$parents $(findparents $BELOW $((row + 1)) $parent_col $FINDING_CONNECTOR)"
   done
