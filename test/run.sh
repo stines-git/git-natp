@@ -93,19 +93,24 @@ do
   do
     for commit in $(git rev-list $branch)
     do
+      subject=$(git show --no-patch --format=%s "$commit")
       mapfile -t changed_files < <(git diff-tree --no-commit-id --name-status -r -m -c --root $branch)
       num_changed="${#changed_files[@]}"
       if [[ "$num_changed" -ne 1 ]]
       then
         echo "not ok $test_number - $testcase"
-        echo "# Commit $commit from branch $branch changed $num_changed files"
+        echo "# Commit $subject $commit from branch $branch changed $num_changed files"
+        for change in "${changed_files[@]}"
+        do
+          echo "# $change"
+        done
         break
       fi
       changed_file=(${changed_files[0]})
       if [[ ! ( "${changed_file[0]}" =~ ^A+$ ) ]]
       then
         echo "not ok $test_number - $testcase"
-        echo "# Commit $commit from branch $branch did not add file: ${changed_file[@]}"
+        echo "# Commit $subject $commit from branch $branch did not add file: ${changed_file[@]}"
         echo "# The change was: ${changed_file[@]}"
         break
       fi
