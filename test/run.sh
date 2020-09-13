@@ -63,7 +63,7 @@ do
 
   actual=$(git-natp <"$input")
 
-  if printf "$actual" | cmp -s - "$output"
+  if echo "$actual" | cmp -s - "$output"
   then
     echo "ok $test_number - $testcase"
   else
