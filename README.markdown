@@ -29,9 +29,8 @@ Alternatively, download this repo and run run `sudo make install` and the script
 
 ###  `git natp create`
 
-Run this command in an empty initialised git repository.
-
-**Caution: Don't run `git natp create` in an existing repository or it could mess up your repository.**
+Run this command in an empty directory. If you accidentally run this command in an non-empty
+or an existing git repository, then this command will gracefully fail before any damage is done.
 
 ### `git natp compare`
 

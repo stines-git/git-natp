@@ -1,6 +1,13 @@
 #!/usr/bin/env bash
 set -eu
 
+# Quit early if we are in an non-empty directory.
+if [[ -n "$(ls -A)" ]]
+then
+  echo "error: directory is not empty."
+  exit 1
+fi
+
 mapfile -t graph < <(git-natp)
 
 declare -A subject_to_hash
