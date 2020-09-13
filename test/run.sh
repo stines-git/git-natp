@@ -15,7 +15,7 @@ shopt -s nullglob
 inputs=($TEST_DIR/*.in)
 count="${#inputs[@]}"
 
-echo "1..$((count * 4))"
+echo "1..$((count * 5))"
 
 function get_diagnostics() {
   actual="$1"
@@ -76,6 +76,49 @@ do
   test_number=$((count + i + 1))
   input="${inputs[i]}"
   filename=$(basename "$input")
+  testcase="${filename%.in} - create - each commit adds single file"
+
+  if [[ ( $# -gt 0 ) && ( $test_number -ne $1 ) ]]
+  then
+    echo "ok $test_number - $testcase # SKIPPED"
+    continue
+  fi
+
+  testcase_dir="$TMP_DIR/$testcase"
+  mkdir "$testcase_dir"
+  cd "$testcase_dir"
+  git-natp create <"$input"
+
+  for branch in $(git for-each-ref --format="%(refname)" refs/heads/)
+  do
+    for commit in $(git rev-list $branch)
+    do
+      mapfile -t changed_files < <(git diff-tree --no-commit-id --name-status -r -m -c --root $branch)
+      num_changed="${#changed_files[@]}"
+      if [[ "$num_changed" -ne 1 ]]
+      then
+        echo "not ok $test_number - $testcase"
+        echo "# Commit $commit from branch $branch changed $num_changed files"
+        break
+      fi
+      changed_file=(${changed_files[0]})
+      if [[ ! ( "${changed_file[0]}" =~ ^A+$ ) ]]
+      then
+        echo "Change: '${changed_file[0]}'"
+        echo "not ok $test_number - $testcase"
+        echo "# Commit $commit from branch $branch did not add file: ${changed_file[@]}"
+        break
+      fi
+    done
+  done
+  echo "ok $test_number - $testcase"
+done
+
+for i in "${!inputs[@]}"
+do
+  test_number=$((count * 2 + i + 1))
+  input="${inputs[i]}"
+  filename=$(basename "$input")
   testcase="${filename%.in} - create and compare"
 
   if [[ ( $# -gt 0 ) && ( $test_number -ne $1 ) ]]
@@ -99,7 +142,7 @@ done
 
 for i in "${!inputs[@]}"
 do
-  test_number=$((count * 2 + i + 1))
+  test_number=$((count * 3 + i + 1))
   input1="${inputs[i]}"
   input2="${inputs[$(((i + 1) % count))]}"
   filename1=$(basename "$input1")
@@ -127,7 +170,7 @@ done
 
 for i in "${!inputs[@]}"
 do
-  test_number=$((count * 3 + i + 1))
+  test_number=$((count * 4 + i + 1))
   input="${inputs[i]}"
   filename=$(basename "$input")
   testcase="${filename%.in} - compare same structure different subjects"
