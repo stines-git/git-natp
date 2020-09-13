@@ -8,6 +8,29 @@ then
   exit 1
 fi
 
+# Parse custom commands
+declare -A subject_to_command
+while (($#))
+do
+  argument=$1
+  shift
+  if [[ $argument != "--cmd" ]]
+  then
+    echo "fatal: unrecognised argument: $argument"
+    exit 1
+  fi
+  if (($# < 2))
+  then
+    echo "fatal: --cmd argument requires two parameters: the commit and the command"
+    exit 1
+  fi
+  subject=$1
+  shift
+  cmd=$1
+  shift
+  subject_to_command[$subject]=$cmd
+done
+
 # Init a new repo.
 git init >/dev/null
 
@@ -15,7 +38,8 @@ mapfile -t graph < <(git-natp)
 
 declare -A subject_to_hash
 declare -a branchnames
-declare -A subject_to_files
+
+ORPHAN_BRANCH="git-natp/orphan-branch"
 
 function create_commit() {
   id="$1"
@@ -23,37 +47,57 @@ function create_commit() {
   shift  # Remaining arguments are the parent subjects.
   parents=($@)
 
-  # Start off with our new file.
-  files="$id"
-
-  # Translate parent subjects into SHA, and append their files.
+  # Translate parent subjects into SHA.
   for i in "${!parents[@]}"
   do
     parent_id=${parents[$i]}
     parents[$i]=${subject_to_hash[$parent_id]}
-    files="$files ${subject_to_files[$parent_id]}"
   done
 
-  subject_to_files[$id]="$files"
+  # Start with the right HEAD.
+  if [[ ${#parents[@]} -gt 0 ]]
+  then
+    git checkout "${parents[0]}" >/dev/null 2>&1
+  else
+    git checkout --orphan "$ORPHAN_BRANCH" >/dev/null 2>&1
+    git rm -rf . >/dev/null 2>&1 || true
+  fi
 
-  # Create the commit. Dummy file called $id is added to ensure unique commits.
+  # Create the commit.
+  if [[ ${#parents[@]} -gt 1 ]]
+  then
+    git merge --allow-unrelated-histories --no-edit -m "$subject" "${parents[@]:1}" >/dev/null
+  else
+    git commit --allow-empty -m "$subject" >/dev/null
+  fi
+
+  # Remove orphan branch if used.
+  if [[ ${#parents[@]} -eq 0 ]]
+  then
+    git checkout $(git rev-list HEAD) >/dev/null 2>&1
+    git branch -d "$ORPHAN_BRANCH" >/dev/null
+  fi
+
+  # Dummy file called $id is added to ensure unique commits.
   # Note: we're creating new unique files, one per commit, to make merging easy
   # for those who want to use this tool to create unit tests for a merging tool
   # (for example, me... why else would I make natp?).
-  # Note: files from the parents are also added so that this commit's diff only
-  # adds a single file. Files from other branches are deleted.
-  rm -rf files
-  mkdir files
-  cd files
-  touch $files
+  mkdir -p commits
+  touch "commits/$id"
+
+  # Run user command for this commit, if any.
+  # The user can introduce or change files this way.
+  if [[ -v subject_to_command[$id] ]]
+  then
+    (eval "${subject_to_command[$id]}")
+  fi
+
+  # Stage all changes and amend them to our commit.
   git add . >/dev/null
-  cd ..
-  tree=$(git write-tree)
-  sha=$(git commit-tree ${parents[@]/#/-p } -m "$subject" "$tree")
-  git checkout "$sha" >/dev/null 2>&1
+  git commit --amend --no-edit >/dev/null
 
   # Save the SHA.
-  subject_to_hash[$id]="$sha"
+  subject_to_hash[$id]="$(git rev-parse HEAD)"
 }
 
 function create_branch() {
