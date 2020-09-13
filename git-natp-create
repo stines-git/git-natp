@@ -46,7 +46,7 @@ function create_commit() {
   mkdir files
   cd files
   touch $files
-  git add $files >/dev/null
+  git add . >/dev/null
   cd ..
   tree=$(git write-tree)
   sha=$(git commit-tree ${parents[@]/#/-p } -m "$subject" "$tree")
