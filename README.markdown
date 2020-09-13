@@ -38,6 +38,9 @@ PREFIX="$HOME/.local" make install
 Run this command in an empty directory. If you accidentally run this command in an non-empty
 or an existing git repository, then this command will gracefully fail before any damage is done.
 
+Each commit generated will contain exactly one new file added to the repository, even for
+merge commits.
+
 ### `git natp compare`
 
 Run this command in an existing git repository. If the repository commit graph matches the
