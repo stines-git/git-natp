@@ -44,25 +44,23 @@ function create_commit() {
 }
 
 function create_branch() {
-  branchname="$1"
+  branchname=$(echo "$1" | sed 's/\[//g;s/\]//g')
+  branchnames+=($branchname)
   commit="$2"
   commit_sha="${subject_to_hash[$commit]}"
   git checkout "$commit_sha" >/dev/null 2>&1
   git branch "$branchname" >/dev/null 2>&1
 }
 
-BRANCH_REGEX="\[[a-zA-Z0-9]+\]"
+BRANCH_LINE_REGEX="^\[[a-zA-Z0-9]+_*\] [a-zA-Z0-9]+_*$"
 
-for entry in "${graph[@]}"
+for line in "${graph[@]}"
 do
-  entry=($entry)
-  if [[ ${entry[0]} =~ $BRANCH_REGEX ]]
+  if [[ $line =~ $BRANCH_LINE_REGEX ]]
   then
-    entry[0]=$(echo ${entry[0]} | sed 's/\[//g;s/\]//g')
-    create_branch "${entry[@]}"
-    branchnames+=(${entry[0]})
+    create_branch $line
   else
-    create_commit "${entry[@]}"
+    create_commit $line
   fi
 done
 
