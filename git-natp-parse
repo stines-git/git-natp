@@ -262,7 +262,7 @@ do
   branchname_col="${branchname_coords[1]}"
   branch=$(inputat $branchname_row $((branchname_col - 2)))
   log "Branchname coords: ${branchname_coords[@]}"
-  if [[ ( -v subject_to_coords[$branch] ) && ( ( ! -v branchnames[$branch] ) || ( -z branchnames[$branch] ) ) ]]
+  if [[ ( -v subject_to_coords[$branch] ) && ( ( ! -v branchnames[$branch] ) || ( -z ${branchnames[$branch]} ) ) ]]
   then
     log "Found commit $branch for branchname $branchname."
     branchnames[$branchname]=$branch
