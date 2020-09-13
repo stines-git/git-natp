@@ -138,6 +138,12 @@ do
     continue
   fi
 
+  if sed "s/[a-zA-Z0-9]/A/g" <"$input" | cmp -s - "$input"
+  then
+    echo "ok $test_number - $testcase # SKIPPED because nothing to rename"
+    continue
+  fi
+
   testcase_dir="$TMP_DIR/$testcase"
   mkdir "$testcase_dir"
   cd "$testcase_dir"
