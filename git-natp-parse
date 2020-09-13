@@ -149,10 +149,15 @@ function findparents() {
   text=$(inputat $row $col)
   log "findparents dir:$child_direction, row:$row, col:$col, text:$text"
   log_push
-  if [[ ( $text =~ $SUBJECT_REGEX ) && ( $has_found_connector = $FOUND_CONNECTOR ) ]]
+  if [[ $text =~ $SUBJECT_REGEX ]]
   then
-    log "Found parent $text"
-    echo "$text"
+    if [[ $has_found_connector = $FOUND_CONNECTOR ]]
+    then
+      log "Found parent $text"
+      echo "$text"
+    else
+      log "Found $text but didn't reah a connector first"
+    fi
   else
     for i in "${!CONNECTORS[@]}"
     do
