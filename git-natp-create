@@ -15,6 +15,7 @@ mapfile -t graph < <(git-natp)
 
 declare -A subject_to_hash
 declare -a branchnames
+declare -A subject_to_files
 
 function create_commit() {
   id="$1"
@@ -22,19 +23,31 @@ function create_commit() {
   shift  # Remaining arguments are the parent subjects.
   parents=($@)
 
-  # Translate parent subjects into SHA.
+  # Start off with our new file.
+  files="$id"
+
+  # Translate parent subjects into SHA, and append their files.
   for i in "${!parents[@]}"
   do
     parent_id=${parents[$i]}
     parents[$i]=${subject_to_hash[$parent_id]}
+    files="$files ${subject_to_files[$parent_id]}"
   done
+
+  subject_to_files[$id]="$files"
 
   # Create the commit. Dummy file called $id is added to ensure unique commits.
   # Note: we're creating new unique files, one per commit, to make merging easy
   # for those who want to use this tool to create unit tests for a merging tool
   # (for example, me... why else would I make natp?).
-  touch "$id"
-  git add "$id" >/dev/null
+  # Note: files from the parents are also added so that this commit's diff only
+  # adds a single file. Files from other branches are deleted.
+  rm -rf files
+  mkdir files
+  cd files
+  touch $files
+  git add $files >/dev/null
+  cd ..
   tree=$(git write-tree)
   sha=$(git commit-tree ${parents[@]/#/-p } -m "$subject" "$tree")
   git checkout "$sha" >/dev/null 2>&1
