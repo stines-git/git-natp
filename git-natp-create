@@ -31,6 +31,7 @@ do
     subject_to_command[$subject]=$cmd
     ;;
   "--verbose")
+    set -x
     exec {verbose}>&2
     ;;
   *)
