@@ -8,14 +8,14 @@ then
   exit 1
 fi
 
-# Setup verbose output file descriptor
+# Setup verbose output file descriptor.
 exec {verbose}>/dev/null
 if [[ -v VERBOSE ]]
 then
   exec {verbose}>&2
 fi
 
-# Parse custom commands
+# Parse arguments.
 declare -A subject_to_command
 while (($#))
 do
