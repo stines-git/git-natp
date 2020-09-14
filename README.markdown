@@ -18,6 +18,28 @@ then this tool can do three things:
 
 Both commands accept the commit graph from `stdin`.
 
+## Example
+
+```sh
+# Given
+git natp create <<-"EOF"
+  A1---A2---A3 master
+        \
+         B1---B2---B3 feature
+EOF
+git checkout feature
+
+# When
+git rebase master
+
+# Then
+git natp compare <<-"EOF"
+  A1---A2---A3 master
+             \
+              B1---B2---B3 feature
+EOF
+```
+
 ## Install
 
 You can install this using `bpkg install ErnWong/git-natp` using [bpkg](https://github.com/bpkg/bpkg).
@@ -62,7 +84,7 @@ After commit `A2`, a `feature` branch is created with 3 commits. The last two co
 then removes, adds and modifies files.
 
 ```sh
-git-natp create \
+git natp create \
   --cmd A1 "touch newfile" \
   --cmd B2 "rm newfile;touch other another" \
   --cmd B3 "echo change >> another" \
@@ -126,7 +148,31 @@ Each line corresponds to a commit on the graph. The first token is the commit su
 Subsequent tokens are the commit's parents in order. After every commit has been listed,
 the branches will be listed in `[branch] commit` pairs.
 
-For example, given the above diagram as `stdin`, `git natp` will output the following:
+For example, given the example diagram as `stdin`, `git natp` will output the following:
+
+<details>
+<summary><b>Example Diagram</b> <kbd>Click to Expand</kbd></summary>
+
+Given this commit graph:
+
+```
+  A1---A2---A3---BB12--BB23--BB34--BB4 master
+        \      .~'/  .~'/  .~'/  .~'
+         \  .~'  /.~'  /.~'  /.~'
+          B1----B2----B3----B4 feature
+```
+
+You could call the following command to get the adjacency list:
+
+```sh
+git natp <<-"EOF"
+  A1---A2---A3---BB12--BB23--BB34--BB4 master
+        \      .~'/  .~'/  .~'/  .~'
+         \  .~'  /.~'  /.~'  /.~'
+          B1----B2----B3----B4 feature
+EOF
+```
+</details>
 
 ```
 A1
