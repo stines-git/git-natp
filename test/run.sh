@@ -247,7 +247,7 @@ EOF
   rev_D="master^2~"
   rev_F="master"
 
-  assert_file_changes "$rev_A" "A" $'A\tfiles/A\nA\tnewfile' || exit 1
-  assert_file_changes "$rev_D" "D" $'A\tfiles/D\nD\tnewfile\nA\tother\nA\tanother' || exit 1
-  assert_file_changes "$rev_F" "F" $'A\tfiles/F\nM\another' || exit 1
+  assert_file_changes "$rev_A" "A" $'A\tcommits/A\nA\tnewfile' || exit 1
+  assert_file_changes "$rev_D" "D" $'A\tanother\nA\tcommits/D\nD\tnewfile\nA\tother' || exit 1
+  assert_file_changes "$rev_F" "F" $'AM\tanother\nAA\tcommits/F' || exit 1
 fi
