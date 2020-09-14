@@ -147,17 +147,18 @@ CONNECTOR_PARENT_DIRECTIONS[7]="$ABOVE"
 CONNECTOR_CHILD_DIRECTIONS[7]="$BELOW"
 
 function findparents() {
-  parent_direction=$1  # Child's perspective.
+  child=$1
+  parent_direction=$2  # Child's perspective.
   child_direction=$((-parent_direction))  # Connector's/Parent's perspective.
-  row=$2
-  col=$3
-  has_found_connector=$4
+  row=$3
+  col=$4
+  has_found_connector=$5
   text=$(inputat $row $col)
   log "findparents dir:$child_direction, row:$row, col:$col, text:$text"
   log_push
   if [[ $text =~ $SUBJECT_REGEX ]]
   then
-    if [[ $has_found_connector = $FOUND_CONNECTOR ]]
+    if [[ ( $has_found_connector = $FOUND_CONNECTOR ) && ( $child != $text ) ]]
     then
       log "Found parent $text"
       echo "$text"
@@ -185,7 +186,7 @@ function findparents() {
         do
           log "Exploring direction $d"
           log_push
-          parents="$parents $(findparents $d $((row + d)) $((col - 1)) $FOUND_CONNECTOR)"
+          parents="$parents $(findparents $child $d $((row + d)) $((col - 1)) $FOUND_CONNECTOR)"
           log_pop
         done
         log_pop
@@ -217,7 +218,7 @@ do
   # First find the parents on the left of the subject.
   log "Finding parents to the left"
   log_push
-  parents="$(findparents $HORIZONTAL $row $((col - 1)) $FINDING_CONNECTOR)"
+  parents="$(findparents $subject $HORIZONTAL $row $((col - 1)) $FINDING_CONNECTOR)"
   log_pop
 
   # Then find the parents above the subject.
@@ -225,7 +226,7 @@ do
   log_push
   for parent_col in $(seq $((col - 1)) $((col + ${subject_length[$subject]} - 1)))
   do
-    parents="$parents $(findparents $ABOVE $((row - 1)) $parent_col $FINDING_CONNECTOR)"
+    parents="$parents $(findparents $subject $ABOVE $((row - 1)) $parent_col $FINDING_CONNECTOR)"
   done
   log_pop
 
@@ -234,7 +235,7 @@ do
   log_push
   for parent_col in $(seq $((col - 1)) $((col + ${subject_length[$subject]} - 1)))
   do
-    parents="$parents $(findparents $BELOW $((row + 1)) $parent_col $FINDING_CONNECTOR)"
+    parents="$parents $(findparents $subject $BELOW $((row + 1)) $parent_col $FINDING_CONNECTOR)"
   done
   log_pop
 
