@@ -7,7 +7,7 @@ If you draw an ASCII diagram of a git commit graph,
 A1---A2---A3---BB12--BB23--BB34--BB4 master release
       \      .~'/  .~'/  .~'/  .~'
        \  .~'  /.~'  /.~'  /.~'
-        B1----B2----B3----B4 feature
+        `B1----B2----B3----B4 feature
 ```
 
 then this tool can do three things:
@@ -161,20 +161,20 @@ For example, given the example diagram as `stdin`, `git natp` will output the fo
 Given this commit graph:
 
 ```
-  A1---A2---A3---BB12--BB23--BB34--BB4 master
+  A1---A2---A3---BB12--BB23--BB34--BB4 master release
         \      .~'/  .~'/  .~'/  .~'
          \  .~'  /.~'  /.~'  /.~'
-          B1----B2----B3----B4 feature
+          `B1----B2----B3----B4 feature
 ```
 
 You could call the following command to get the adjacency list:
 
 ```sh
 git natp <<-"EOF"
-  A1---A2---A3---BB12--BB23--BB34--BB4 master
+  A1---A2---A3---BB12--BB23--BB34--BB4 master release
         \      .~'/  .~'/  .~'/  .~'
          \  .~'  /.~'  /.~'  /.~'
-          B1----B2----B3----B4 feature
+          `B1----B2----B3----B4 feature
 EOF
 ```
 </details>
@@ -191,8 +191,9 @@ BB23 BB12 B2 B3
 B4 B3
 BB34 BB23 B3 B4
 BB4 BB34 B4
-[master] BB4
 [feature] B4
+[master] BB4
+[release] BB4
 ```
 
 ## Testing
