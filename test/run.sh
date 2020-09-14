@@ -233,9 +233,7 @@ EOF
     rev=$1
     subject=$2
     expected=$3
-    echo "$expected"
     actual=$(git diff-tree --no-commit-id --name-status -r -m -c --root "$rev")
-    echo "$actual"
     if [[ "$expected" != "$actual" ]]
     then
       echo "not ok $test_number - $testcase"
