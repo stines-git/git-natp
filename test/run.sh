@@ -250,4 +250,5 @@ EOF
   assert_file_changes "$rev_A" "A" $'A\tcommits/A\nA\tnewfile' || exit 1
   assert_file_changes "$rev_D" "D" $'A\tanother\nA\tcommits/D\nD\tnewfile\nA\tother' || exit 1
   assert_file_changes "$rev_F" "F" $'AM\tanother\nAA\tcommits/F' || exit 1
+  echo "ok $test_number - $testcase"
 fi
