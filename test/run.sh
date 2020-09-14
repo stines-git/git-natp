@@ -17,7 +17,7 @@ count="${#inputs[@]}"
 
 echo "1..$((count * 5 + 1))"
 
-function get_diagnostics() {
+function print_diff() {
   expected="$1"
   actual="$2"
   echo "Expected:"
@@ -41,11 +41,16 @@ function get_diagnostics() {
 }
 
 function print_diagnostics() {
-  get_diagnostics "$@" | while read line
+  while read line
   do
     echo "# $line"
   done
 }
+
+# Pipe all stderr to a background process that prepends them with hashes.
+mkfifo "$TMP_DIR/diagnostics"
+print_diagnostics <"$TMP_DIR/diagnostics" &
+exec 2> "$TMP_DIR/diagnostics"
 
 for i in "${!inputs[@]}"
 do
@@ -68,7 +73,7 @@ do
     echo "ok $test_number - $testcase"
   else
     echo "not ok $test_number - $testcase"
-    print_diagnostics "$(<$output)" "$actual"
+    print_diff "$(<$output)" "$actual" >&2
   fi
 done
 
@@ -88,7 +93,7 @@ do
   testcase_dir="$TMP_DIR/$testcase"
   mkdir "$testcase_dir"
   cd "$testcase_dir"
-  git-natp create <"$input"
+  git-natp create --verbose <"$input"
 
   for branch in $(git for-each-ref --format="%(refname)" refs/heads/)
   do
@@ -100,10 +105,10 @@ do
       if [[ "$num_changed" -ne 1 ]]
       then
         echo "not ok $test_number - $testcase"
-        echo "# Commit $subject $commit from branch $branch changed $num_changed files"
+        echo "Commit $subject $commit from branch $branch changed $num_changed files" >&2
         for change in "${changed_files[@]}"
         do
-          echo "# $change"
+          echo "$change" >&2
         done
         break
       fi
@@ -111,8 +116,8 @@ do
       if [[ ! ( "${changed_file[0]}" =~ ^A+$ ) ]]
       then
         echo "not ok $test_number - $testcase"
-        echo "# Commit $subject $commit from branch $branch did not add file: ${changed_file[@]}"
-        echo "# The change was: ${changed_file[@]}"
+        echo "Commit $subject $commit from branch $branch did not add file: ${changed_file[@]}" >&2
+        echo "The change was: ${changed_file[@]}" >&2
         break
       fi
     done
@@ -234,8 +239,8 @@ EOF
     if [[ "$expected" != "$actual" ]]
     then
       echo "not ok $test_number - $testcase"
-      echo "# Commit $subject have unexpected or missing changes"
-      print_diagnostics "$expected" "$actual"
+      echo "Commit $subject have unexpected or missing changes" >&2
+      print_diff "$expected" "$actual" >&2
       exit 1
     fi
   }
