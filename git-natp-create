@@ -47,7 +47,7 @@ done
 
 function RUN() {
   echo "RUN $@" >&$verbose
-  (exec "$@") 2>&1 | while read line
+  (eval "$@") 2>&1 | while read line
   do
     echo "| $line" >&$verbose
   done
