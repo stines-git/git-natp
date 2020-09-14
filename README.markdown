@@ -4,7 +4,7 @@ git-natp: Not A Tree Parser
 If you draw an ASCII diagram of a git commit graph,
 
 ```
-A1---A2---A3---BB12--BB23--BB34--BB4 master
+A1---A2---A3---BB12--BB23--BB34--BB4 master release
       \      .~'/  .~'/  .~'/  .~'
        \  .~'  /.~'  /.~'  /.~'
         B1----B2----B3----B4 feature
@@ -126,6 +126,7 @@ accessible from any branch (i.e. detached commits) will not be checked.
 - Commit names (aka their subjects) are sequences of alphanumeric characters with no space in between.
 - The diagram must be topologically sorted left to right, so that the commits to the left are the parents of the commits to the right.
 - Branch names are alphanumeric character sequences that is one space to the right of a commit subject.
+- Multiple branches are allowed on a commit by placing them side by side, separated by a space.
 - Edges describe the parents of each commit, and need to be touching the commit name.
 - The parent order for each commit is important. This tool orders them based on the direction of the edges that are used to connect them. Going from the child to the parent (right-to-left), a horizontal edge comes before an upwards edge, and an upwards edge comes before a downwards edge.
 
