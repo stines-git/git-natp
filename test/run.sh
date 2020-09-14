@@ -110,7 +110,7 @@ do
         do
           echo "$change" >&2
         done
-        break
+        exit 1
       fi
       changed_file=(${changed_files[0]})
       if [[ ! ( "${changed_file[0]}" =~ ^A+$ ) ]]
@@ -118,7 +118,7 @@ do
         echo "not ok $test_number - $testcase"
         echo "Commit $subject $commit from branch $branch did not add file: ${changed_file[@]}" >&2
         echo "The change was: ${changed_file[@]}" >&2
-        break
+        exit 1
       fi
     done
   done
@@ -148,6 +148,7 @@ do
     echo "ok $test_number - $testcase"
   else
     echo "not ok $test_number - $testcase"
+    exit 1
   fi
 done
 
@@ -174,6 +175,7 @@ do
   if sed "s/[a-zA-Z0-9]/A/g" <"$input2" | git-natp compare >/dev/null
   then
     echo "not ok $test_number - $testcase"
+    exit 1
   else
     echo "ok $test_number - $testcase"
   fi
@@ -206,6 +208,7 @@ do
   if sed "s/[a-zA-Z0-9]/A/g" <"$input" | git-natp compare >/dev/null
   then
     echo "not ok $test_number - $testcase"
+    exit 1
   else
     echo "ok $test_number - $testcase"
   fi
