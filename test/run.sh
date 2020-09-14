@@ -93,7 +93,7 @@ do
   testcase_dir="$TMP_DIR/$testcase"
   mkdir "$testcase_dir"
   cd "$testcase_dir"
-  git-natp create --verbose <"$input"
+  git-natp create <"$input"
 
   for branch in $(git for-each-ref --format="%(refname)" refs/heads/)
   do
