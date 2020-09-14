@@ -82,52 +82,26 @@ function create_commit() {
     parents[$i]=${subject_to_hash[$parent_id]}
   done
 
-  log "Start with the right HEAD."
-  if [[ ${#parents[@]} -gt 0 ]]
-  then
-    RUN git checkout "${parents[0]}"
-  else
-    RUN git checkout --orphan "$ORPHAN_BRANCH"
-    RUN git rm -rf . || true
-  fi
+  log "Setup working directory to have all files from the parents."
+  RUN git read-tree -v "${parents[@]}"
+  RUN git checkout-index --all
+  RUN git clean -f -d
 
-  log "Create the commit."
-  if [[ ${#parents[@]} -gt 1 ]]
-  then
-    RUN git merge --allow-unrelated-histories --no-edit -m "$subject" "${parents[@]:1}"
-  else
-    RUN git commit --allow-empty -m "$subject"
-  fi
-
-  if [[ ${#parents[@]} -eq 0 ]]
-  then
-    log "Removing orphan branch that was used."
-    RUN git checkout $(git rev-list HEAD)
-    RUN git branch -d "$ORPHAN_BRANCH"
-  fi
-
-  # Dummy file called $id is added to ensure unique commits.
-  # Note: we're creating new unique files, one per commit, to make merging easy
-  # for those who want to use this tool to create unit tests for a merging tool
-  # (for example, me... why else would I make natp?).
-  log "Adding dummy commits/$id file."
+  log "Add unique commit file."
   mkdir -p commits
   touch "commits/$id"
 
-  # Run user command for this commit, if any.
-  # The user can introduce or change files this way.
   if [[ -v subject_to_command[$id] ]]
   then
     log "Running user command for this commit."
     RUN "${subject_to_command[$id]}"
   fi
 
-  log "Stage all changes and amend them to our commit."
-  RUN git add .
-  RUN git commit --amend --no-edit
-
-  # Save the SHA.
-  subject_to_hash[$id]="$(git rev-parse HEAD)"
+  log "Stage working directory to index and create commit with this tree."
+  RUN git add --all
+  tree=$(git write-tree)
+  sha=$(git commit-tree ${parents[@]/#/-p } -m "$subject" "$tree")
+  subject_to_hash[$id]="$sha"
 }
 
 function create_branch() {
