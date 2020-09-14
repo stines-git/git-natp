@@ -42,7 +42,11 @@ EOF
 
 ## Install
 
-You can install this using `bpkg install ErnWong/git-natp` using [bpkg](https://github.com/bpkg/bpkg).
+You can install this using [bpkg](https://github.com/bpkg/bpkg):
+
+```sh
+bpkg install ErnWong/git-natp -g
+```
 
 Alternatively, download this repo and run `sudo make install` and the scripts will be copied to
 `/usr/local/bin/...`. Similarly, `sudo make uninstall` removes them. To install them to your
