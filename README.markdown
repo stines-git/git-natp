@@ -56,6 +56,7 @@ If the `VERBOSE` environment variable is set, then this command will run as if `
 
 <details>
 <summary>Example Usage <kbd>Click to Expand</kbd></summary>
+
 The following creates a `master` branch with 3 commits, the first of which adds a new file.
 After commit `A2`, a `feature` branch is created with 3 commits. The last two commits in `feature`
 then removes, adds and modifies files.
