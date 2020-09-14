@@ -47,13 +47,19 @@ OPTIONS
 Run this command in an empty directory. If you accidentally run this command in an non-empty
 or an existing git repository, then this command will gracefully fail before any damage is done.
 
-Each commit generated will contain exactly one new file added to the repository, even for
-merge commits.
+Each commit generated will, by default, add a new file `commits/<commit>` to the repository, even for
+merge commits. This is to keep each commit unique even when their subjects and parents are the same.
+
+To customize each commit, you can use the `--cmd` option to add, remove, and change files.
 
 If the `VERBOSE` environment variable is set, then this command will run as if `--verbose` option is given.
 
 <details>
-<summary><kbd>Example usage.</kbd></summary>
+<summary>Example Usage <kbd>Click to Expand</kbd></summary>
+The following creates a `master` branch with 3 commits, the first of which adds a new file.
+After commit `A2`, a `feature` branch is created with 3 commits. The last two commits in `feature`
+then removes, adds and modifies files.
+
 ```sh
 git-natp create \
   --cmd A1 "touch newfile" \
