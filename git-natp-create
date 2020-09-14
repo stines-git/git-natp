@@ -45,6 +45,10 @@ do
   esac
 done
 
+function log() {
+  echo "$@" >&$verbose
+}
+
 function RUN() {
   echo "RUN $@" >&$verbose
   (eval "$@") 2>&1 | while read line
@@ -69,6 +73,8 @@ function create_commit() {
   shift  # Remaining arguments are the parent subjects.
   parents=($@)
 
+  log "Creating commit for $id with parents [${parents[*]}]"
+
   # Translate parent subjects into SHA.
   for i in "${!parents[@]}"
   do
@@ -76,7 +82,7 @@ function create_commit() {
     parents[$i]=${subject_to_hash[$parent_id]}
   done
 
-  # Start with the right HEAD.
+  log "Start with the right HEAD."
   if [[ ${#parents[@]} -gt 0 ]]
   then
     RUN git checkout "${parents[0]}"
@@ -85,7 +91,7 @@ function create_commit() {
     RUN git rm -rf . || true
   fi
 
-  # Create the commit.
+  log "Create the commit."
   if [[ ${#parents[@]} -gt 1 ]]
   then
     RUN git merge --allow-unrelated-histories --no-edit -m "$subject" "${parents[@]:1}"
@@ -93,9 +99,9 @@ function create_commit() {
     RUN git commit --allow-empty -m "$subject"
   fi
 
-  # Remove orphan branch if used.
   if [[ ${#parents[@]} -eq 0 ]]
   then
+    log "Removing orphan branch that was used."
     RUN git checkout $(git rev-list HEAD)
     RUN git branch -d "$ORPHAN_BRANCH"
   fi
@@ -104,6 +110,7 @@ function create_commit() {
   # Note: we're creating new unique files, one per commit, to make merging easy
   # for those who want to use this tool to create unit tests for a merging tool
   # (for example, me... why else would I make natp?).
+  log "Adding dummy commits/$id file."
   mkdir -p commits
   touch "commits/$id"
 
@@ -111,10 +118,11 @@ function create_commit() {
   # The user can introduce or change files this way.
   if [[ -v subject_to_command[$id] ]]
   then
+    log "Running user command for this commit."
     RUN "${subject_to_command[$id]}"
   fi
 
-  # Stage all changes and amend them to our commit.
+  log "Stage all changes and amend them to our commit."
   RUN git add .
   RUN git commit --amend --no-edit
 
@@ -127,6 +135,7 @@ function create_branch() {
   branchnames+=($branchname)
   commit="$2"
   commit_sha="${subject_to_hash[$commit]}"
+  log "Creating branch $branchname at commit $commit"
   RUN git checkout "$commit_sha"
   RUN git branch "$branchname"
 }
@@ -145,5 +154,6 @@ done
 
 if [[ ( -v branchnames ) && ( ${#branchnames[@]} > 0 ) ]]
 then
+  log "Checking out the first branch"
   RUN git checkout ${branchnames[0]}
 fi
