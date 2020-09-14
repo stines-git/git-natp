@@ -111,7 +111,7 @@ function create_commit() {
   # The user can introduce or change files this way.
   if [[ -v subject_to_command[$id] ]]
   then
-    (eval "${subject_to_command[$id]}")
+    RUN "${subject_to_command[$id]}"
   fi
 
   # Stage all changes and amend them to our commit.
