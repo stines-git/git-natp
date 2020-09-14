@@ -33,13 +33,39 @@ PREFIX="$HOME/.local" make install
 
 ## Usage information
 
-###  `git natp create`
+###  `git natp create [<options>]`
+
+```
+OPTIONS
+       --cmd <commit> <command>
+           Run a custom command when creating the specified commit. This
+           command can be repeated as many times as necessary.
+       --verbose
+           Log internal git command outputs.
+```
 
 Run this command in an empty directory. If you accidentally run this command in an non-empty
 or an existing git repository, then this command will gracefully fail before any damage is done.
 
 Each commit generated will contain exactly one new file added to the repository, even for
 merge commits.
+
+If the `VERBOSE` environment variable is set, then this command will run as if `--verbose` option is given.
+
+<details>
+<summary><kbd>Example usage.</kbd></summary>
+```sh
+git-natp create \
+  --cmd A1 "touch newfile" \
+  --cmd B2 "rm newfile;touch other another" \
+  --cmd B3 "echo change >> another" \
+<<-"EOF"
+  A1---A2---A3 master
+        \
+         B1---B2---B3 feature
+EOF
+```
+</details>
 
 ### `git natp compare`
 
