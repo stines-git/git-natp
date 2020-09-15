@@ -251,6 +251,18 @@ EOF
   rev_D="master^2~"
   rev_F="master"
 
+  compare_failed=0
+  git-natp compare <<-"EOF" >/dev/null || compare_failed=1
+    A---B---C----F master
+         `D----E'
+EOF
+  if ((compare_failed))
+  then
+    echo "not ok $test_number - $testcase"
+    echo "Comparison failed" >&2
+    exit 1
+  fi
+
   assert_file_changes "$rev_A" "A" $'A\tcommits/A\nA\tnewfile' || exit 1
   assert_file_changes "$rev_D" "D" $'A\tanother\nA\tcommits/D\nD\tnewfile\nA\tother' || exit 1
   assert_file_changes "$rev_F" "F" $'AA\ta\nAM\tanother\nAA\tcommits/F' || exit 1
