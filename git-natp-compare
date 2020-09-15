@@ -28,25 +28,17 @@ function structurehash_commit() {
 BRANCH_REGEX="\[[a-zA-Z0-9]+\]"
 BRANCH_LINE_REGEX="^\[[a-zA-Z0-9]+_*\] [a-zA-Z0-9]+_*$"
 
-# Using function because conversion into array is difficult.
-function get_head() {
-  echo $1
-}
-function get_tail() {
-  shift
-  echo "$@"
-}
-
 for line in "${graph[@]}"
 do
+  mapfile -t parts < <(sed "s/[ \t\n][ \t\n]*/\n/g" <<<"$line")
   if [[ $line =~ $BRANCH_REGEX ]]
   then
-    branchname=$(echo $(get_head $line) | sed 's/\[//g;s/\]//g')
-    commit=$(get_tail $line)
+    branchname=$(echo "${parts[0]}" | sed 's/\[//g;s/\]//g')
+    commit="${parts[1]}"
     branch_to_structurehash[$branchname]="${commit_to_structurehash[$commit]}"
   else
-    id=$(get_head $line)
-    parents=$(get_tail $line)
+    id="${parts[0]}"
+    parents="${parts[@]:1}"
     subject=$(echo "$id" | sed 's/_//g')  # Strip disambiguating underscores.
     structurehash_commit "$id" "$subject" $parents
   fi
