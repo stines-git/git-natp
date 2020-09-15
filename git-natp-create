@@ -117,11 +117,12 @@ BRANCH_LINE_REGEX="^\[[a-zA-Z0-9]+_*\] [a-zA-Z0-9]+_*$"
 
 for line in "${graph[@]}"
 do
+  mapfile -t parts < <(sed "s/[ \t\n][ \t\n]*/\n/g" <<<"$line")
   if [[ $line =~ $BRANCH_LINE_REGEX ]]
   then
-    create_branch $line
+    create_branch "${parts[@]}"
   else
-    create_commit $line
+    create_commit "${parts[@]}"
   fi
 done
 
