@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -eu
+set -euf
 
 mapfile -t input
 row_count="${#input[@]}"
@@ -93,8 +93,8 @@ done
 log_pop
 
 function inputat() {
-  row=$1
-  col=$2
+  row="$1"
+  col="$2"
   coords="$row $col"
   if [[ -v tokens[$coords] ]]
   then
@@ -147,13 +147,13 @@ CONNECTOR_PARENT_DIRECTIONS[7]="$ABOVE"
 CONNECTOR_CHILD_DIRECTIONS[7]="$BELOW"
 
 function findparents() {
-  child=$1
-  parent_direction=$2  # Child's perspective.
-  child_direction=$((-parent_direction))  # Connector's/Parent's perspective.
-  row=$3
-  col=$4
-  has_found_connector=$5
-  text=$(inputat $row $col)
+  child="$1"
+  parent_direction="$2"  # Child's perspective.
+  child_direction="$((-parent_direction))"  # Connector's/Parent's perspective.
+  row="$3"
+  col="$4"
+  has_found_connector="$5"
+  text="$(inputat $row $col)"
   log "findparents dir:$child_direction, row:$row, col:$col, text:$text"
   log_push
   if [[ $text =~ $SUBJECT_REGEX ]]
@@ -242,7 +242,7 @@ do
   parents=($parents)
 
   # Prune branch candidates and branch name candidates.
-  for parent in ${parents[@]}
+  for parent in "${parents[@]}"
   do
     if [[ -v branchnames[$parent] ]]
     then
@@ -272,7 +272,7 @@ do
   if [[ ( -v subject_to_coords[$branch] ) || ( -v branchnames[$branch] ) ]]
   then
     log "Found commit $branch for branchname $branchname."
-    branchnames[$branchname]=$branch
+    branchnames[$branchname]="$branch"
   else
     log "Removing branchname candidate $branchname because '$branch' is not a commit or branch name"
     unset branchnames[$branchname]

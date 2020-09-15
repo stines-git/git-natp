@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -eu
+set -euf
 
 # Quit early if we are in an non-empty directory.
 if [[ -n "$(ls -A)" ]]
@@ -19,7 +19,7 @@ fi
 declare -A subject_to_command
 while (($#))
 do
-  argument=$1
+  argument="$1"
   shift
   case $argument in
   "--cmd" )
@@ -28,11 +28,11 @@ do
       echo "fatal: --cmd argument requires two parameters: the commit and the command"
       exit 1
     fi
-    subject=$1
+    subject="$1"
     shift
-    cmd=$1
+    cmd="$1"
     shift
-    subject_to_command[$subject]=$cmd
+    subject_to_command[$subject]="$cmd"
     ;;
   "--verbose")
     exec {verbose}>&2
@@ -68,7 +68,7 @@ ORPHAN_BRANCH="git-natp/orphan-branch"
 
 function create_commit() {
   id="$1"
-  subject=$(echo $id | sed 's/_//g')  # Strip disambiguating underscores.
+  subject="$(echo "$id" | sed 's/_//g')"  # Strip disambiguating underscores.
   shift  # Remaining arguments are the parent subjects.
   parents=($@)
 
@@ -77,8 +77,8 @@ function create_commit() {
   # Translate parent subjects into SHA.
   for i in "${!parents[@]}"
   do
-    parent_id=${parents[$i]}
-    parents[$i]=${subject_to_hash[$parent_id]}
+    parent_id="${parents[$i]}"
+    parents[$i]="${subject_to_hash[$parent_id]}"
   done
 
   log "Setup working directory to have all files from the parents."
@@ -98,13 +98,13 @@ function create_commit() {
 
   log "Stage working directory to index and create commit with this tree."
   RUN git add --all
-  tree=$(git write-tree)
-  sha=$(git commit-tree ${parents[@]/#/-p } -m "$subject" "$tree")
+  tree="$(git write-tree)"
+  sha="$(git commit-tree ${parents[@]/#/-p } -m "$subject" "$tree")"
   subject_to_hash[$id]="$sha"
 }
 
 function create_branch() {
-  branchname=$(echo "$1" | sed 's/\[//g;s/\]//g')
+  branchname="$(echo "$1" | sed 's/\[//g;s/\]//g')"
   branchnames+=($branchname)
   commit="$2"
   commit_sha="${subject_to_hash[$commit]}"
@@ -129,5 +129,5 @@ done
 if [[ ( -v branchnames ) && ( ${#branchnames[@]} > 0 ) ]]
 then
   log "Checking out the first branch"
-  RUN git checkout ${branchnames[0]}
+  RUN git checkout "${branchnames[0]}"
 fi

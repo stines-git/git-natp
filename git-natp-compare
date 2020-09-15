@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -eu
+set -euf
 
 mapfile -t graph < <(git-natp)
 
@@ -16,13 +16,13 @@ function structurehash_commit() {
   # Translate parent subjects into the structure hashes.
   for i in "${!parents[@]}"
   do
-    parent_id=${parents[$i]}
-    parents[$i]=${commit_to_structurehash[$parent_id]}
+    parent_id="${parents[$i]}"
+    parents[$i]="${commit_to_structurehash[$parent_id]}"
   done
 
   # Hash.
   structure=($subject ${parents[@]})
-  commit_to_structurehash[$id]=$(printf "${structure[*]}" | sha256sum)
+  commit_to_structurehash[$id]="$(printf "${structure[*]}" | sha256sum)"
 }
 
 BRANCH_REGEX="\[[a-zA-Z0-9]+\]"
@@ -33,14 +33,13 @@ do
   mapfile -t parts < <(sed "s/[ \t\n][ \t\n]*/\n/g" <<<"$line")
   if [[ $line =~ $BRANCH_REGEX ]]
   then
-    branchname=$(echo "${parts[0]}" | sed 's/\[//g;s/\]//g')
+    branchname="$(echo "${parts[0]}" | sed 's/\[//g;s/\]//g')"
     commit="${parts[1]}"
     branch_to_structurehash[$branchname]="${commit_to_structurehash[$commit]}"
   else
     id="${parts[0]}"
-    parents="${parts[@]:1}"
-    subject=$(echo "$id" | sed 's/_//g')  # Strip disambiguating underscores.
-    structurehash_commit "$id" "$subject" $parents
+    subject="$(echo "$id" | sed 's/_//g')"  # Strip disambiguating underscores.
+    structurehash_commit "$id" "$subject" "${parts[@]:1}"
   fi
 done
 
@@ -53,11 +52,11 @@ do
     for entry in "${git_graph[@]}"
     do
       entry=($entry)
-      sha=${entry[0]}
-      subject=$(git show --no-patch --format=%s "$sha")
+      sha="${entry[0]}"
+      subject="$(git show --no-patch --format=%s "$sha")"
       structurehash_commit "$sha" "$subject" "${entry[@]:1}"
     done
-    branch_sha=$(git rev-parse "$branch")
+    branch_sha="$(git rev-parse "$branch")"
     if [[ ${branch_to_structurehash[$branch]} != ${commit_to_structurehash[$branch_sha]} ]]
     then
       echo "Branch $branch has a different structure"
@@ -70,7 +69,8 @@ do
 done
 
 # Check that all actual branches are accounted for.
-for branch in $(git for-each-ref --format="%(refname:short)" refs/heads/)
+mapfile -t branches < <(git for-each-ref --format="%(refname:short)" refs/heads/)
+for branch in "${branches[@]}"
 do
   if [[ ! -v branch_to_structurehash[$branch] ]]
   then
