@@ -223,10 +223,11 @@ else
   testcase_dir="$TMP_DIR/$testcase"
   mkdir "$testcase_dir"
   cd "$testcase_dir"
+  # File 'a' is created to test globbing bugs from unquoted variables like [master]
   git-natp create \
     --cmd A "touch newfile" \
     --cmd D "rm newfile;touch other another" \
-    --cmd F "echo change >> another" \
+    --cmd F "touch a; echo change >> another" \
 <<-"EOF"
     A---B---C----F master
          `D----E'
@@ -252,6 +253,6 @@ EOF
 
   assert_file_changes "$rev_A" "A" $'A\tcommits/A\nA\tnewfile' || exit 1
   assert_file_changes "$rev_D" "D" $'A\tanother\nA\tcommits/D\nD\tnewfile\nA\tother' || exit 1
-  assert_file_changes "$rev_F" "F" $'AM\tanother\nAA\tcommits/F' || exit 1
+  assert_file_changes "$rev_F" "F" $'AA\ta\nAM\tanother\nAA\tcommits/F' || exit 1
   echo "ok $test_number - $testcase"
 fi
