@@ -21,7 +21,7 @@ while (($#))
 do
   argument="$1"
   shift
-  case $argument in
+  case "$argument" in
   "--cmd" )
     if (($# < 2))
     then
